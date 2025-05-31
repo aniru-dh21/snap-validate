@@ -33,7 +33,7 @@
     "schema-validation",
     "pattern-matching"
   ],
-  "author": "Ramachandra Anirudh Vemulapalli (vemulapallianirudh18@gmail.com)",
+  "author": "Ramachandra Anirudh Vemulapalli",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -44,14 +44,14 @@
   },
   "homepage": "https://github.com/aniru-dh21/snap-validate#readme",
   "devDependencies": {
-    "@babel/core": "^7.22.0",
-    "@babel/preset-env": "^7.22.0",
-    "babel-jest": "^29.5.0",
-    "eslint": "^8.42.0",
-    "husky": "^8.0.3",
-    "jest": "^29.5.0",
-    "lint-staged": "^13.2.2",
-    "prettier": "^2.8.8"
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.57.1",
+    "husky": "^9.1.0",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.0"
   },
   "files": [
     "src/",

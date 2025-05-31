@@ -1,5 +1,5 @@
 /**
- * Mini Validator - Lightweight validator library
+ * Snap Validate - Lightweight validator library
  * @version 0.0.1
  */
 
