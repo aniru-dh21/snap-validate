@@ -60,7 +60,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Required for provenance generation
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,6 +74,12 @@ jobs:
         run: npm ci
       - name: Run tests
         run: npm test
+      - name: Update package version to match release tag
+        run: |
+          # Extract version from release tag (removes 'v' prefix if present)
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          npm version $VERSION --no-git-tag-version
       - name: Publish to NPM
         run: npm publish --provenance --access public
         env:
