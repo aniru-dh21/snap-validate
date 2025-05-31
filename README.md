@@ -1,14 +1,15 @@
-# Mini Validator 🛡️
+# Snap Validate ⚡
 
-[![npm version](https://badge.fury.io/js/mini-validator.svg)](https://badge.fury.io/js/mini-validator)
-[![Build Status](https://github.com/yourusername/mini-validator/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/yourusername/mini-validator/actions)
-[![Coverage Status](https://codecov.io/gh/yourusername/mini-validator/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/mini-validator)
+[![npm version](https://badge.fury.io/js/snap-validate.svg)](https://badge.fury.io/js/snap-validate)
+[![Build Status](https://github.com/aniru-dh21/snap-validate/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/aniru-dh21/snap-validate/actions)
+[![Coverage Status](https://codecov.io/gh/aniru-dh21/snap-validate/branch/main/graph/badge.svg)](https://codecov.io/gh/aniru-dh21/snap-validate)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A lightweight validation library for common patterns without heavy dependencies. Perfect for client-side and server-side validation with zero external dependencies.
+A lightning-fast, lightweight validation library for common patterns without heavy dependencies. Perfect for client-side and server-side validation with zero external dependencies.
 
 ## Features
 
+- ⚡ **Lightning Fast**: Optimized for speed and performance
 - 🚀 **Lightweight**: No external dependencies, minimal footprint
 - 🔧 **Flexible**: Chainable validation rules and custom validators
 - 📧 **Common Patterns**: Email, phone, credit card, URL, password validation
@@ -20,13 +21,13 @@ A lightweight validation library for common patterns without heavy dependencies.
 ## Installation
 
 ```bash
-npm install mini-validator
+npm install snap-validate
 ```
 
 ## Quick Start
 
 ```javascript
-const { validators, validate } = require('mini-validator');
+const { validators, validate } = require('snap-validate');
 
 // Single field validation
 const emailResult = validators.email('user@example.com').validate();
@@ -52,11 +53,13 @@ console.log(result.isValid); // true
 ## Available Validators
 
 ### Email Validation
+
 ```javascript
 validators.email('user@example.com').validate();
 ```
 
 ### Phone Number Validation
+
 ```javascript
 // US format (default)
 validators.phone('(555) 123-4567').validate();
@@ -69,17 +72,20 @@ validators.phone('1234567890', 'simple').validate();
 ```
 
 ### Credit Card Validation
+
 ```javascript
 // Uses Luhn algorithm
 validators.creditCard('4532015112830366').validate();
 ```
 
 ### URL Validation
+
 ```javascript
 validators.url('https://example.com').validate();
 ```
 
 ### Password Validation
+
 ```javascript
 // Default: min 8 chars, requires upper, lower, numbers
 validators.password('SecurePass123').validate();
@@ -95,16 +101,19 @@ validators.password('MyPass123!', {
 ```
 
 ### Alphanumeric Validation
+
 ```javascript
 validators.alphanumeric('ABC123').validate();
 ```
 
 ### Numeric Validation
+
 ```javascript
 validators.numeric('12345').validate();
 ```
 
 ### Zip Code Validation
+
 ```javascript
 // US zip code
 validators.zipCode('12345').validate();
@@ -120,8 +129,9 @@ validators.zipCode('SW1A 1AA', 'uk').validate();
 ## Custom Validation
 
 ### Using BaseValidator
+
 ```javascript
-const { BaseValidator } = require('mini-validator');
+const { BaseValidator } = require('snap-validate');
 
 const customValidator = new BaseValidator('test-value')
   .required('This field is required')
@@ -133,6 +143,7 @@ const result = customValidator.validate();
 ```
 
 ### Schema Validation with Custom Rules
+
 ```javascript
 const schema = {
   username: (value) => new BaseValidator(value)
@@ -179,9 +190,9 @@ if (!schemaResult.isValid) {
 ## Browser Usage
 
 ```html
-<script src="https://unpkg.com/mini-validator/src/index.js"></script>
+<script src="https://unpkg.com/snap-validate/src/index.js"></script>
 <script>
-  const { validators } = MiniValidator;
+  const { validators } = SnapValidate;
   
   const result = validators.email('user@example.com').validate();
   console.log(result.isValid);
@@ -191,10 +202,12 @@ if (!schemaResult.isValid) {
 ## API Reference
 
 ### ValidationResult
+
 - `isValid: boolean` - Whether validation passed
 - `errors: string[]` - Array of error messages
 
 ### BaseValidator Methods
+
 - `required(message?)` - Field is required
 - `min(length, message?)` - Minimum length validation
 - `max(length, message?)` - Maximum length validation
@@ -202,6 +215,7 @@ if (!schemaResult.isValid) {
 - `validate()` - Execute validation and return result
 
 ### Available Validators
+
 - `validators.email(value)`
 - `validators.phone(value, format?)`
 - `validators.creditCard(value)`
@@ -210,6 +224,7 @@ if (!schemaResult.isValid) {
 - `validators.alphanumeric(value)`
 - `validators.numeric(value)`
 - `validators.zipCode(value, country?)`
+
 
 ## Contributing
 
@@ -250,8 +265,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Changelog
 
 ### v1.0.0
+
 - Initial release
 - Basic validation patterns (email, phone, credit card, URL, password)
 - Schema validation support
 - Comprehensive test suite
 - CI/CD pipeline setup
+- Lightning-fast performance optimizations
+
+---
+
+Made with ⚡ by [Ramachandra Anirudh Vemulapalli](https://github.com/aniru-dh21)
