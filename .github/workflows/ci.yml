@@ -85,20 +85,13 @@ jobs:
         run: npm test
 
       - name: Publish to NPM
-        run: npm publish
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create GitHub Release Assets
+      - name: Create and Upload Release Assets
         run: |
           tar -czf snap-validate-${{ github.event.release.tag_name }}.tar.gz src/ README.md package.json LICENSE
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+          gh release upload ${{ github.event.release.tag_name }} snap-validate-${{ github.event.release.tag_name }}.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./snap-validate-${{ github.event.release.tag_name }}.tar.gz
-          asset_name: snap-validate-${{ github.event.release.tag_name }}.tar.gz
-          asset_content_type: application/gzip
