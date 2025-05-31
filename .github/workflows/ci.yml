@@ -17,22 +17,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Run linting
         run: npm run lint
-
       - name: Run tests
         run: npm run test:coverage
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -47,19 +42,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Use Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Run security audit
         run: npm audit --audit-level=moderate
-
       - name: Check for vulnerabilities
         run: npx audit-ci --moderate
 
@@ -67,28 +58,26 @@ jobs:
     needs: [test, security]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && github.event.action == 'published'
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Use Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Run tests
         run: npm test
-
       - name: Publish to NPM
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Create and Upload Release Assets
         run: |
           tar -czf snap-validate-${{ github.event.release.tag_name }}.tar.gz src/ README.md package.json LICENSE
