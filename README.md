@@ -264,7 +264,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### v1.0.0
+### v0.1.0
 
 - Initial release
 - Basic validation patterns (email, phone, credit card, URL, password)
