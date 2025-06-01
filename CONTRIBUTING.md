@@ -28,7 +28,7 @@ Pull requests are the best way to propose changes to the codebase. We actively w
 ```bash
 # Clone the repository
 git clone https://github.com/aniru-dh21/snap-validate.git
-cd mini-validator
+cd snap-validate
 
 # Install dependencies
 npm install
