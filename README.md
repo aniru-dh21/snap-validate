@@ -2,7 +2,6 @@
 
 [![npm version](https://img.shields.io/npm/v/snap-validate.svg?style=flat-square)](https://www.npmjs.com/package/snap-validate)
 [![Build Status](https://github.com/aniru-dh21/snap-validate/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/aniru-dh21/snap-validate/actions)
-[![Coverage Status](https://codecov.io/gh/aniru-dh21/snap-validate/branch/main/graph/badge.svg)](https://codecov.io/gh/aniru-dh21/snap-validate)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![npm downloads](https://img.shields.io/npm/dm/snap-validate.svg?style=flat-square)](https://npm-stat.com/charts.html?package=snap-validate)
 
