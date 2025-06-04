@@ -1,4 +1,4 @@
-declare module 'mini-validator' {
+declare module 'snap-validate' {
   export interface ValidationResult {
     isValid: boolean;
     errors: string[];
@@ -18,6 +18,8 @@ declare module 'mini-validator' {
 
   export class BaseValidator {
     constructor(value: any);
+    value: any;
+    rules: Array<() => ValidationResult>;
     required(message?: string): BaseValidator;
     min(length: number, message?: string): BaseValidator;
     max(length: number, message?: string): BaseValidator;
