@@ -2,7 +2,7 @@
 
 const { validators, validate, BaseValidator } = require('../src/index');
 
-console.log('🛡️  Mini Validator Examples\n');
+console.log('🛡️  Snap Validate Examples\n');
 
 // Example 1: Basic email validation
 console.log('1. Email Validation:');
@@ -37,7 +37,7 @@ phoneTests.forEach(({ value, format }) => {
     }
 });
 
-console.log('\n3. Credit Card Validation: ');
+console.log('\n3. Credit Card Validation:');
 const creditCardTests = [
     '4532015112830366', // Valid Visa test number
     '1234567890123456', // Invalid
@@ -102,13 +102,13 @@ console.log(`  Schema validation: ${schemaResult.isValid ? '✅' : '❌'}`);
 
 if (!schemaResult.isValid) {
     const errors = schemaResult.getErrors();
-    console.log('   Validation errors:')
+    console.log('   Validation errors:');
     Object.entries(errors).forEach(([field, fieldErrors]) => {
         console.log(`    ${field}: ${fieldErrors.join(', ')}`);
     });
 }
 
-console.log('\n7. URL Validation:')
+console.log('\n7. URL Validation:');
 const urlTests = [
     'https://example.com',
     'http://test.org/path?query=1',

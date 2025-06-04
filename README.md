@@ -225,7 +225,6 @@ if (!schemaResult.isValid) {
 - `validators.numeric(value)`
 - `validators.zipCode(value, country?)`
 
-
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
@@ -263,6 +262,42 @@ npm run format
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
+
+### v0.2.1 - Bug Fixes & Enhanced Validation
+
+#### Critical Bug Fixes
+
+- **Pattern Validation Fix**: Resolved issue where patterns were tested on null/undefined values, causing validation errors
+- **Type safety improvements**: Added proper type checking and string conversion before regex testing
+- **Luhn algorithm enhancement**: Fixed credit card validation with better null/undefined handling and string processing
+
+#### Enhanced Error Handling
+
+- **Robust error handling**: Added comprehensive try-catch blocks in validation methods
+- **Input validation**: Added validation for schema and data parameters in main `validate()` function
+- **Graceful degradation**: Improved handling of edge cases with null/undefined values
+- **Detailed error messages**: More descriptive and consistent error messages throughout the library
+
+#### Validation Improvement
+
+- **Enhanced min/max validation**: Better support for strings, arrays, and numbers with proper type checking
+- **Safer regex handling**: Fixed potential undefined regex issues in phone and zipCode validators
+- **Value handling**: Improved null/undefined checking using `!= null` pattern
+- **Credit card validation**: Enhanced Luhn algorithm implementation with better error handling
+
+#### Test Suite Enhancements
+
+- **ValidationResult testing**: Added comprehensive tests for the core ValidationResult class
+- **BaseValidator coverage**: Complete testing of all chaining methods (required, min, max, pattern)
+- **Enhanced validator tests**: More thorough testing of all predefined validators with edge cases
+- **Schema validation tests**: Improved testing of the main validate function with error scenarios
+- **Error handling tests**: Added tests for validation exceptions and setup errors
+
+#### New Features
+
+- **Multi-type min/max support**: `min()` and `max()` methods now properly handle strings, arrays, and numbers
+- **Better phone format handling**: Improved fallback for unknown phone number formats
+- **Enhanced zip code support**: Better handling of international postal code formats
 
 ### v0.1.0
 

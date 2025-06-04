@@ -1,6 +1,6 @@
 /**
  * Snap Validate - Lightweight validator library
- * @version 0.0.1
+ * @version 0.2.1
  */
 
 // Core validation class
@@ -36,8 +36,21 @@ class BaseValidator {
 
   min(length, message = `Minimum length is ${length}`) {
     this.rules.push(() => {
-      if (this.value && this.value.length < length) {
-        return new ValidationResult(false, [message]);
+      // Only validate if value exists and a length property
+      if (this.value != null && this.value !== '') {
+        // Check if value has length property (string, array)
+        if (typeof this.value === 'string' || Array.isArray(this.value)) {
+          if (this.value.length < length) {
+            return new ValidationResult(false, [message]);
+          }
+        } else if (typeof this.value === 'number') {
+          // For numbers, compare the value itself
+          if (this.value < length) {
+            return new ValidationResult(false, [message]);
+          }
+        } else {
+          return new ValidationResult(false, ['Value must be a string, array, or number']);
+        }
       }
       return new ValidationResult(true);
     });
@@ -46,8 +59,21 @@ class BaseValidator {
 
   max(length, message = `Maximum length is ${length}`) {
     this.rules.push(() => {
-      if (this.value && this.value.length > length) {
-        return new ValidationResult(false, [message]);
+      // Only validate if value exists and has a length property
+      if (this.value != null && this.value !== '') {
+        // Check if value has length property (string, array)
+        if (typeof this.value === 'string' || Array.isArray(this.value)) {
+          if (this.value.length > length) {
+            return new ValidationResult(false, [message]);
+          }
+        } else if (typeof this.value === 'number') {
+          // For numbers, compare the value itself
+          if (this.value > length) {
+            return new ValidationResult(false, [message]);
+          }
+        } else {
+          return new ValidationResult(false, ['Value must be a string, array or number']);
+        }
       }
       return new ValidationResult(true);
     });
@@ -56,8 +82,13 @@ class BaseValidator {
 
   pattern(regex, message = 'Invalid format') {
     this.rules.push(() => {
-      if (this.value && !regex.test(this.value)) {
-        return new ValidationResult(false, [message]);
+      // Only test pattern if value exists and is not empty
+      if (this.value != null && this.value !== '') {
+        // Ensure value is a string before testing regex
+        const stringValue = String(this.value);
+        if (!regex.test(stringValue)) {
+          return new ValidationResult(false, [message]);
+        }
       }
       return new ValidationResult(true);
     });
@@ -68,10 +99,16 @@ class BaseValidator {
     const result = new ValidationResult(true);
 
     for (const rule of this.rules) {
-      const ruleResult = rule();
-      if (!ruleResult.isValid) {
+      try {
+        const ruleResult = rule();
+        if (!ruleResult.isValid) {
+          result.isValid = false;
+          result.errors.push(...ruleResult.errors);
+        }
+      } catch (error) {
+        // Handle any unexpected errors during validation
         result.isValid = false;
-        result.errors.push(...ruleResult.errors);
+        result.errors.push(`Validation error: ${error.message}`);
       }
     }
 
@@ -174,7 +211,7 @@ const validators = {
   alphanumeric: (value) => {
     return new BaseValidator(value)
       .required('This field is required')
-      .pattern(/^[a-zA-Z0-9]+$/, 'Only letters and number are allowed');
+      .pattern(/^[a-zA-Z0-9]+$/, 'Only letters and numbers are allowed');
   },
 
   numeric: (value) => {
@@ -198,17 +235,32 @@ const validators = {
 
 // Main validation function
 const validate = (schema, data) => {
+  // Input validation
+  if (!schema || typeof schema !== 'object') {
+    throw new Error('Schema must be a valid object');
+  }
+
+  if (!data || typeof data !== 'object') {
+    throw new Error('Data must be a valid object');
+  }
+
   const results = {};
   let isValid = true;
 
   for (const [field, validator] of Object.entries(schema)) {
-    const fieldValue = data[field];
-    const result = typeof validator === 'function'
-      ? validator(fieldValue).validate()
-      : validator.validate();
+    try {
+      const fieldValue = data[field];
+      const result = typeof validator === 'function'
+        ? validator(fieldValue).validate()
+        : validator.validate();
 
-    results[field] = result;
-    if (!result.isValid) {
+      results[field] = result;
+      if (!result.isValid) {
+        isValid = false;
+      }
+    } catch (error) {
+      // Handle validation setup errors
+      results[field] = new ValidationResult(false, [`Validation setup error: ${error.message}`]);
       isValid = false;
     }
   }
