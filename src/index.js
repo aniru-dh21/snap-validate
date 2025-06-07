@@ -1,6 +1,6 @@
 /**
  * Snap Validate - Lightweight validator library
- * @version 0.2.1
+ * @version 0.3.0
  */
 
 // Core validation class
@@ -22,6 +22,8 @@ class BaseValidator {
   constructor(value) {
     this.value = value;
     this.rules = [];
+    this.asyncRules = [];
+    this.isOptional = false;
   }
 
   required(message = 'This field is required') {
@@ -34,8 +36,18 @@ class BaseValidator {
     return this;
   }
 
+  optional() {
+    this.isOptional = true;
+    return this;
+  }
+
   min(length, message = `Minimum length is ${length}`) {
     this.rules.push(() => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
       // Only validate if value exists and a length property
       if (this.value != null && this.value !== '') {
         // Check if value has length property (string, array)
@@ -59,6 +71,11 @@ class BaseValidator {
 
   max(length, message = `Maximum length is ${length}`) {
     this.rules.push(() => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
       // Only validate if value exists and has a length property
       if (this.value != null && this.value !== '') {
         // Check if value has length property (string, array)
@@ -82,6 +99,11 @@ class BaseValidator {
 
   pattern(regex, message = 'Invalid format') {
     this.rules.push(() => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
       // Only test pattern if value exists and is not empty
       if (this.value != null && this.value !== '') {
         // Ensure value is a string before testing regex
