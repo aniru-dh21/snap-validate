@@ -1,6 +1,6 @@
 /**
- * Snap Validate - Lightweight validator library
- * @version 0.2.1
+ * Snap Validate - Enhanced Lightweight validator library
+ * @version 0.3.0
  */
 
 // Core validation class
@@ -22,10 +22,17 @@ class BaseValidator {
   constructor(value) {
     this.value = value;
     this.rules = [];
+    this.asyncRules = [];
+    this.isOptional = false;
   }
 
   required(message = 'This field is required') {
     this.rules.push(() => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
       if (this.value === null || this.value === undefined || this.value === '') {
         return new ValidationResult(false, [message]);
       }
@@ -34,8 +41,18 @@ class BaseValidator {
     return this;
   }
 
+  optional() {
+    this.isOptional = true;
+    return this;
+  }
+
   min(length, message = `Minimum length is ${length}`) {
     this.rules.push(() => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
       // Only validate if value exists and a length property
       if (this.value != null && this.value !== '') {
         // Check if value has length property (string, array)
@@ -59,6 +76,11 @@ class BaseValidator {
 
   max(length, message = `Maximum length is ${length}`) {
     this.rules.push(() => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
       // Only validate if value exists and has a length property
       if (this.value != null && this.value !== '') {
         // Check if value has length property (string, array)
@@ -82,6 +104,11 @@ class BaseValidator {
 
   pattern(regex, message = 'Invalid format') {
     this.rules.push(() => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
       // Only test pattern if value exists and is not empty
       if (this.value != null && this.value !== '') {
         // Ensure value is a string before testing regex
@@ -91,6 +118,95 @@ class BaseValidator {
         }
       }
       return new ValidationResult(true);
+    });
+    return this;
+  }
+
+  when(condition, validator) {
+    this.rules.push(() => {
+      // Evaluate condition
+      const shouldValidate = typeof condition === 'function' ? condition(this.value) : condition;
+
+      if (shouldValidate) {
+        // Apply the conditional validator
+        if (typeof validator === 'function') {
+          const conditionalValidator = validator(this.value);
+          return conditionalValidator.validate();
+        } else {
+          // If validator is already a BaseValidator instance
+          return validator.validate();
+        }
+      }
+
+      return new ValidationResult(true);
+    });
+    return this;
+  }
+
+  custom(validatorFn, message = 'Custom validation failed') {
+    this.rules.push(() => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
+      try {
+        const result = validatorFn(this.value);
+
+        // Handle boolean result
+        if (typeof result === 'boolean') {
+          return result ? new ValidationResult(true) : new ValidationResult(false, [message]);
+        }
+
+        // Handle ValidationResult object
+        if (result && typeof result === 'object' && 'isValid' in result) {
+          return result;
+        }
+
+        // Handle string result (error message)
+        if (typeof result === 'string') {
+          return new ValidationResult(false, [result]);
+        }
+
+        // Default to true if no clear result
+        return new ValidationResult(true);
+      } catch (error) {
+        return new ValidationResult(false, [`Custom validation error: ${error.message}`]);
+      }
+    });
+    return this;
+  }
+
+  customAsync(validatorFn, message = 'Async validation failed') {
+    this.asyncRules.push(async () => {
+      // Skip validation if optional and empty
+      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+        return new ValidationResult(true);
+      }
+
+      try {
+        const result = await validatorFn(this.value);
+
+        // Handle boolean result
+        if (typeof result === 'boolean') {
+          return result ? new ValidationResult(true) : new ValidationResult(false, [message]);
+        }
+
+        // Handle ValidationResult object
+        if (result && typeof result === 'object' && 'isValid' in result) {
+          return result;
+        }
+
+        // Handle string result (error message)
+        if (typeof result === 'string') {
+          return new ValidationResult(false, [result]);
+        }
+
+        // Default to true if no clear result
+        return new ValidationResult(true);
+      } catch (error) {
+        return new ValidationResult(false, [`Async validation error: ${error.message}`]);
+      }
     });
     return this;
   }
@@ -109,6 +225,34 @@ class BaseValidator {
         // Handle any unexpected errors during validation
         result.isValid = false;
         result.errors.push(`Validation error: ${error.message}`);
+      }
+    }
+
+    return result;
+  }
+
+  async validateAsync() {
+    // First run synchronous validations
+    const syncResult = this.validate();
+
+    if (!syncResult.isValid) {
+      return syncResult;
+    }
+
+    // Then run asynchronous validations
+    const result = new ValidationResult(true, [...syncResult.errors]);
+
+    for (const asyncRule of this.asyncRules) {
+      try {
+        const ruleResult = await asyncRule();
+        if (!ruleResult.isValid) {
+          result.isValid = false;
+          result.errors.push(...ruleResult.errors);
+        }
+      } catch (error) {
+        // Handle any unexpected errors during async validation
+        result.isValid = false;
+        result.errors.push(`Async validation error: ${error.message}`);
       }
     }
 
@@ -143,8 +287,11 @@ const validators = {
       let sum = 0;
       let isEven = false;
 
-      for (let i = num.length - 1; i >= 0; i--) {
-        let digit = parseInt(num[i]);
+      // Remove spaces and ensure we have a string
+      const cleanNum = String(num).replace(/\s/g, '');
+
+      for (let i = cleanNum.length - 1; i >= 0; i--) {
+        let digit = parseInt(cleanNum[i]);
 
         if (isEven) {
           digit *= 2;
@@ -159,12 +306,27 @@ const validators = {
     };
 
     const validator = new BaseValidator(value)
-      .required('Credit card number is required')
-      .pattern(/^\d{13,19}$/, 'Credit card must be 13-19 digits');
+      .required('Credit card number is required');
 
+    // Add custom validation for credit card format and Luhn check
     validator.rules.push(() => {
-      if (value && !luhnCheck(value.replace(/\s/g, ''))) {
-        return new ValidationResult(false, ['Invalid credit card number']);
+      // Skip validation if optional and empty
+      if (validator.isOptional && (validator.value === null || validator.value === undefined || validator.value === '')) {
+        return new ValidationResult(true);
+      }
+
+      if (validator.value) {
+        const cleanValue = String(validator.value).replace(/\s/g, '');
+
+        // Check length (13-19 digits)
+        if (!/^\d{13,19}$/.test(cleanValue)) {
+          return new ValidationResult(false, ['Credit card must be 13-19 digits']);
+        }
+
+        // Check Luhn algorithm
+        if (!luhnCheck(cleanValue)) {
+          return new ValidationResult(false, ['Invalid credit card number']);
+        }
       }
       return new ValidationResult(true);
     });
@@ -280,9 +442,66 @@ const validate = (schema, data) => {
   };
 };
 
+// Async validation function
+const validateAsync = async (schema, data) => {
+  // Input validation
+  if (!schema || typeof schema !== 'object') {
+    throw new Error('Schema must be a valid object');
+  }
+
+  if (!data || typeof data !== 'object') {
+    throw new Error('Data must be a valid object');
+  }
+
+  const results = {};
+  let isValid = true;
+
+  for (const [field, validator] of Object.entries(schema)) {
+    try {
+      const fieldValue = data[field];
+
+      let result;
+      if (typeof validator === 'function') {
+        const validatorInstance = validator(fieldValue);
+        result = validatorInstance.asyncRules.length > 0
+          ? await validatorInstance.validateAsync()
+          : validatorInstance.validate();
+      } else {
+        result = validator.asyncRules && validator.asyncRules.length > 0
+          ? await validator.validateAsync()
+          : validator.validate();
+      }
+
+      results[field] = result;
+      if (!result.isValid) {
+        isValid = false;
+      }
+    } catch (error) {
+      // Handle validation setup errors
+      results[field] = new ValidationResult(false, [`Validation setup error: ${error.message}`]);
+      isValid = false;
+    }
+  }
+
+  return {
+    isValid,
+    errors: results,
+    getErrors: () => {
+      const errors = {};
+      for (const [field, result] of Object.entries(results)) {
+        if (!result.isValid) {
+          errors[field] = result.errors;
+        }
+      }
+      return errors;
+    }
+  };
+};
+
 module.exports = {
   BaseValidator,
   ValidationResult,
   validators,
-  validate
+  validate,
+  validateAsync
 };

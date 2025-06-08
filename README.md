@@ -14,6 +14,9 @@ A lightning-fast, lightweight validation library for common patterns without hea
 - 🔧 **Flexible**: Chainable validation rules and custom validators
 - 📧 **Common Patterns**: Email, phone, credit card, URL, password validation
 - 🌍 **International**: Support for different formats (US/International phone, postal codes)
+- 🔄 **Async Support**: Full async validation support for database checks and API calls
+- 🎯 **Conditional**: Advanced conditional validation with `when()` and `optional()`
+- 🛠️ **Custom Validators**: Add your own sync and async validation logic
 - 🧪 **Well Tested**: Comprehensive test suite with high coverage
 - 📦 **Easy Integration**: Works in Node.js and browsers
 - 🔗 **Chainable API**: Intuitive fluent interface
@@ -126,6 +129,89 @@ validators.zipCode('K1A 0A6', 'ca').validate();
 validators.zipCode('SW1A 1AA', 'uk').validate();
 ```
 
+## Advanced Validation Features
+
+### Conditional Validation
+
+```javascript
+const { BaseValidator } = require('snap-validate');
+
+// Validate only when condition is met
+const validator = new BaseValidator(value)
+  .when(user.isAdmin, validators.required('Admin field required'))
+  .min(5, 'Must be at least 5 characters');
+
+// Optional validation - skip if empty/null/undefined
+const optionalValidator = new BaseValidator(value)
+  .optional()
+  .email('Must be a valid email if provided');
+
+// Function-based conditions
+const conditionalValidator = new BaseValidator(value)
+  .when(() => user.role === 'admin', validators.required())
+  .max(100);
+```
+
+### Custom Validators
+
+```javascript
+const { BaseValidator } = require('snap-validate');
+
+// Synchronous custom validation
+const customValidator = new BaseValidator(value)
+  .custom((val) => val !== 'forbidden', 'Value cannot be forbidden')
+  .custom((val) => {
+    if (val.includes('admin') && !user.isAdmin) {
+      return 'Only admins can use this value';
+    }
+    return true;
+  });
+
+// Asynchronous custom validation
+const asyncValidator = new BaseValidator(email)
+  .email()
+  .customAsync(async (email) => {
+    const exists = await checkEmailExists(email);
+    return !exists || 'Email already exists';
+  }, 'Email validation failed');
+
+// Use async validation
+const result = await asyncValidator.validateAsync();
+```
+
+### Async Validation
+
+```javascript
+// Async validation for single field
+const validator = new BaseValidator(username)
+  .required()
+  .min(3)
+  .customAsync(async (username) => {
+    const available = await checkUsernameAvailable(username);
+    return available || 'Username is already taken';
+  });
+
+const result = await validator.validateAsync();
+
+// Async schema validation
+const asyncSchema = {
+  username: (value) => new BaseValidator(value)
+    .required()
+    .customAsync(async (val) => {
+      const available = await checkUsernameAvailable(val);
+      return available || 'Username taken';
+    }),
+  
+  email: (value) => validators.email(value)
+    .customAsync(async (val) => {
+      const exists = await checkEmailExists(val);
+      return !exists || 'Email already registered';
+    })
+};
+
+const asyncResult = await validate.async(asyncSchema, userData);
+```
+
 ## Custom Validation
 
 ### Using BaseValidator
@@ -157,6 +243,7 @@ const schema = {
   age: (value) => new BaseValidator(value)
     .required()
     .pattern(/^\d+$/, 'Age must be a number')
+    .custom((val) => parseInt(val) >= 18, 'Must be 18 or older')
 };
 
 const userData = {
@@ -185,6 +272,16 @@ if (!schemaResult.isValid) {
   console.log('Field errors:', errors);
   // Output: { email: ['Invalid email format'], password: ['Password too weak'] }
 }
+
+// Async error handling
+try {
+  const asyncResult = await validator.validateAsync();
+  if (!asyncResult.isValid) {
+    console.log('Async validation errors:', asyncResult.errors);
+  }
+} catch (error) {
+  console.log('Validation exception:', error.message);
+}
 ```
 
 ## Browser Usage
@@ -212,7 +309,12 @@ if (!schemaResult.isValid) {
 - `min(length, message?)` - Minimum length validation
 - `max(length, message?)` - Maximum length validation
 - `pattern(regex, message?)` - Pattern matching validation
-- `validate()` - Execute validation and return result
+- `when(condition, validator)` - Conditional validation
+- `optional()` - Skip validation if empty/null/undefined
+- `custom(fn, message?)` - Custom synchronous validation
+- `customAsync(fn, message?)` - Custom asynchronous validation
+- `validate()` - Execute synchronous validation
+- `validateAsync()` - Execute asynchronous validation
 
 ### Available Validators
 
@@ -224,6 +326,11 @@ if (!schemaResult.isValid) {
 - `validators.alphanumeric(value)`
 - `validators.numeric(value)`
 - `validators.zipCode(value, country?)`
+
+### Validation Functions
+
+- `validate(schema, data)` - Synchronous schema validation
+- `validate.async(schema, data)` - Asynchronous schema validation
 
 ## Contributing
 
@@ -263,50 +370,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### v0.2.1 - Bug Fixes & Enhanced Validation
-
-#### Critical Bug Fixes
-
-- **Pattern Validation Fix**: Resolved issue where patterns were tested on null/undefined values, causing validation errors
-- **Type safety improvements**: Added proper type checking and string conversion before regex testing
-- **Luhn algorithm enhancement**: Fixed credit card validation with better null/undefined handling and string processing
-
-#### Enhanced Error Handling
-
-- **Robust error handling**: Added comprehensive try-catch blocks in validation methods
-- **Input validation**: Added validation for schema and data parameters in main `validate()` function
-- **Graceful degradation**: Improved handling of edge cases with null/undefined values
-- **Detailed error messages**: More descriptive and consistent error messages throughout the library
-
-#### Validation Improvement
-
-- **Enhanced min/max validation**: Better support for strings, arrays, and numbers with proper type checking
-- **Safer regex handling**: Fixed potential undefined regex issues in phone and zipCode validators
-- **Value handling**: Improved null/undefined checking using `!= null` pattern
-- **Credit card validation**: Enhanced Luhn algorithm implementation with better error handling
-
-#### Test Suite Enhancements
-
-- **ValidationResult testing**: Added comprehensive tests for the core ValidationResult class
-- **BaseValidator coverage**: Complete testing of all chaining methods (required, min, max, pattern)
-- **Enhanced validator tests**: More thorough testing of all predefined validators with edge cases
-- **Schema validation tests**: Improved testing of the main validate function with error scenarios
-- **Error handling tests**: Added tests for validation exceptions and setup errors
-
-#### New Features
-
-- **Multi-type min/max support**: `min()` and `max()` methods now properly handle strings, arrays, and numbers
-- **Better phone format handling**: Improved fallback for unknown phone number formats
-- **Enhanced zip code support**: Better handling of international postal code formats
-
-### v0.1.0
-
-- Initial release
-- Basic validation patterns (email, phone, credit card, URL, password)
-- Schema validation support
-- Comprehensive test suite
-- CI/CD pipeline setup
-- Lightning-fast performance optimizations
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 
 ---
 

@@ -1,4 +1,4 @@
-const { validators, validate, BaseValidator, ValidationResult } = require('../src/index');
+const { validators, validate, BaseValidator, ValidationResult, validateAsync } = require('../src/index');
 
 describe('Snap Validate Tests', () => {
 
@@ -597,6 +597,375 @@ describe('Snap Validate Tests', () => {
       const result = validate(schema, data);
 
       expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Optional Field Validation', () => {
+    test('should skip validation for optional empty fields', () => {
+      const result = new BaseValidator('').optional().min(5).max(3).pattern(/\d+/).validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should skip validation for optional null fields', () => {
+      const result = new BaseValidator(null).optional().required().validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should skip validation for optional undefined fields', () => {
+      const result = new BaseValidator(undefined).optional().min(10).validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should validate optional field when it has a value', () => {
+      const result = new BaseValidator('abc').optional().min(5).validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Minimum length is 5');
+    });
+
+    test('should validate optional field with valid value', () => {
+      const result = new BaseValidator('hello world').optional().min(5).validate();
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Conditional Validation (when)', () => {
+    test('should apply validation when condition is true', () => {
+      const result = new BaseValidator('test')
+        .when(true, (value) => new BaseValidator(value).min(10))
+        .validate();
+
+      expect(result.isValid).toBe(false);
+    });
+
+    test('should skip validation when condition is false', () => {
+      const result = new BaseValidator('test')
+        .when(false, (value) => new BaseValidator(value).min(10))
+        .validate();
+
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should apply validation when function condition returns true', () => {
+      const result = new BaseValidator('admin')
+        .when((value) => value === 'admin', (value) => new BaseValidator(value).min(10))
+        .validate();
+
+      expect(result.isValid).toBe(false);
+    });
+
+    test('should skip validation when function condition returns false', () => {
+      const result = new BaseValidator('user')
+        .when((value) => value === 'admin', (value) => new BaseValidator(value).min(10))
+        .validate();
+
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should work with pre-created validator instance', () => {
+      const conditionalValidator = new BaseValidator('test').min(10);
+      const result = new BaseValidator('test')
+        .when(true, conditionalValidator)
+        .validate();
+
+      expect(result.isValid).toBe(false);
+    });
+  });
+
+  describe('Custom Validation', () => {
+    test('should pass custom validation with boolean return', () => {
+      const result = new BaseValidator('test')
+        .custom((value) => value.length === 4)
+        .validate();
+
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should fail custom validation with boolean return', () => {
+      const result = new BaseValidator('test')
+        .custom((value) => value.length === 10, 'Length must be 10')
+        .validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Length must be 10');
+    });
+
+    test('should handle custom validation with ValidationResult return', () => {
+      const result = new BaseValidator('test')
+        .custom(() => new ValidationResult(false, ['Custom error message']))
+        .validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Custom error message');
+    });
+
+    test('should handle custom validation with string return', () => {
+      const result = new BaseValidator('test')
+        .custom(() => 'This is a custom error')
+        .validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('This is a custom error');
+    });
+
+    test('should handle custom validation with no clear return', () => {
+      const result = new BaseValidator('test')
+        .custom(() => undefined)
+        .validate();
+
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should handle custom validation errors gracefully', () => {
+      const result = new BaseValidator('test')
+        .custom(() => {
+          throw new Error('Custom function error');
+        })
+        .validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Custom validation error: Custom function error');
+    });
+
+    test('should skip custom validation for optional empty values', () => {
+      const result = new BaseValidator('')
+        .optional()
+        .custom(() => false, 'Should not execute')
+        .validate();
+
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Async Validation', () => {
+    test('should pass async validation with boolean return', async () => {
+      const result = await new BaseValidator('test')
+        .customAsync(async (value) => value.length === 4)
+        .validateAsync();
+
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should fail async validation with boolean return', async () => {
+      const result = await new BaseValidator('test')
+        .customAsync(async (value) => value.length === 10, 'Length must be 10')
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Length must be 10');
+    });
+
+    test('should handle async validation with ValidationResult return', async () => {
+      const result = await new BaseValidator('test')
+        .customAsync(async () => new ValidationResult(false, ['Async error']))
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Async error');
+    });
+
+    test('should handle async validation with string return', async () => {
+      const result = await new BaseValidator('test')
+        .customAsync(async () => 'Async custom error')
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Async custom error');
+    });
+
+    test('should handle async validation errors gracefully', async () => {
+      const result = await new BaseValidator('test')
+        .customAsync(async () => {
+          throw new Error('Async function error');
+        })
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Async validation error: Async function error');
+    });
+
+    test('should run sync validations before async validations', async () => {
+      const result = await new BaseValidator('')
+        .required('Sync error')
+        .customAsync(async () => false, 'Async error')
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Sync error');
+      expect(result.errors).not.toContain('Async error');
+    });
+
+    test('should run async validations after successful sync validations', async () => {
+      const result = await new BaseValidator('test')
+        .required()
+        .customAsync(async () => false, 'Async error')
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Async error');
+    });
+
+    test('should skip async validation for optional empty values', async () => {
+      const result = await new BaseValidator('')
+        .optional()
+        .customAsync(async () => false, 'Should not execute')
+        .validateAsync();
+
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Edge Cases and Error Handling', () => {
+    test('should handle non-string, non-array, non-number values in min validation', () => {
+      const result = new BaseValidator({}).min(5).validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Value must be a string, array, or number');
+    });
+
+    test('should handle non-string, non-array, non-number values in max validation', () => {
+      const result = new BaseValidator({}).max(5).validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Value must be a string, array or number');
+    });
+
+    test('should convert non-string values to string for pattern validation', () => {
+      const result = new BaseValidator(123).pattern(/^\d+$/).validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should handle zero values correctly in min validation', () => {
+      const result = new BaseValidator(0).min(5).validate();
+      expect(result.isValid).toBe(false);
+    });
+
+    test('should handle zero values correctly in max validation', () => {
+      const result = new BaseValidator(0).max(5).validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should handle empty arrays in min validation', () => {
+      const result = new BaseValidator([]).min(1).validate();
+      expect(result.isValid).toBe(false);
+    });
+
+    test('should handle empty arrays in max validation', () => {
+      const result = new BaseValidator([]).max(5).validate();
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Credit Card Luhn Algorithm Edge Cases', () => {
+    test('should handle credit card numbers with spaces', () => {
+      const result = validators.creditCard('4532 0151 1283 0366').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should validate American Express test number', () => {
+      const result = validators.creditCard('371449635398431').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should validate Discover test number', () => {
+      const result = validators.creditCard('6011111111111117').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should handle minimum length credit card (13 digits)', () => {
+      const result = validators.creditCard('4000000000030').validate();
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Async Schema Validation', () => {
+    test('should validate async schema successfully', async () => {
+      const schema = {
+        email: validators.email,
+        username: (value) => new BaseValidator(value)
+          .required()
+          .customAsync(async (val) => val !== 'taken', 'Username already taken')
+      };
+
+      const data = {
+        email: 'user@example.com',
+        username: 'available'
+      };
+
+      const result = await validateAsync(schema, data);
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should handle async schema validation errors', async () => {
+      const schema = {
+        email: validators.email,
+        username: (value) => new BaseValidator(value)
+          .required()
+          .customAsync(async (val) => val !== 'taken', 'Username already taken')
+      };
+
+      const data = {
+        email: 'user@example.com',
+        username: 'taken'
+      };
+
+      const result = await validateAsync(schema, data);
+      expect(result.isValid).toBe(false);
+      expect(result.getErrors().username).toContain('Username already taken');
+    });
+
+    test('should handle mixed sync and async validations in schema', async () => {
+      const schema = {
+        email: validators.email, // sync only
+        username: (value) => new BaseValidator(value)
+          .required() // sync
+          .min(3) // sync
+          .customAsync(async (val) => val !== 'admin', 'Username not allowed') // async
+      };
+
+      const data = {
+        email: 'invalid-email',
+        username: 'ab' // too short
+      };
+
+      const result = await validateAsync(schema, data);
+      expect(result.isValid).toBe(false);
+      expect(result.getErrors().email).toContain('Invalid email format');
+      expect(result.getErrors().username).toContain('Minimum length is 3');
+    });
+
+    test('should throw error for invalid schema in async validation', async () => {
+      await expect(validateAsync(null, {})).rejects.toThrow('Schema must be a valid object');
+      await expect(validateAsync('invalid', {})).rejects.toThrow('Schema must be a valid object');
+    });
+
+    test('should throw error for invalid data in async validation', async () => {
+      const schema = { email: validators.email };
+      await expect(validateAsync(schema, null)).rejects.toThrow('Data must be a valid object');
+      await expect(validateAsync(schema, 'invalid')).rejects.toThrow('Data must be a valid object');
+    });
+  });
+
+  describe('Custom Message Validation', () => {
+    test('should use custom required message', () => {
+      const result = new BaseValidator('').required('Custom required message').validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Custom required message');
+    });
+
+    test('should use custom min message', () => {
+      const result = new BaseValidator('ab').min(5, 'Custom min message').validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Custom min message');
+    });
+
+    test('should use custom max message', () => {
+      const result = new BaseValidator('toolong').max(3, 'Custom max message').validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Custom max message');
+    });
+
+    test('should use custom pattern message', () => {
+      const result = new BaseValidator('abc').pattern(/^\d+$/, 'Custom pattern message').validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Custom pattern message');
     });
   });
 });
