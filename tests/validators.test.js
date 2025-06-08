@@ -691,7 +691,7 @@ describe('Snap Validate Tests', () => {
 
     test('should handle custom validation with ValidationResult return', () => {
       const result = new BaseValidator('test')
-        .custom((value) => new ValidationResult(false, ['Custom error message']))
+        .custom(() => new ValidationResult(false, ['Custom error message']))
         .validate();
 
       expect(result.isValid).toBe(false);
@@ -700,7 +700,7 @@ describe('Snap Validate Tests', () => {
 
     test('should handle custom validation with string return', () => {
       const result = new BaseValidator('test')
-        .custom((value) => 'This is a custom error')
+        .custom(() => 'This is a custom error')
         .validate();
 
       expect(result.isValid).toBe(false);
@@ -709,7 +709,7 @@ describe('Snap Validate Tests', () => {
 
     test('should handle custom validation with no clear return', () => {
       const result = new BaseValidator('test')
-        .custom((value) => undefined)
+        .custom(() => undefined)
         .validate();
 
       expect(result.isValid).toBe(true);
@@ -717,7 +717,7 @@ describe('Snap Validate Tests', () => {
 
     test('should handle custom validation errors gracefully', () => {
       const result = new BaseValidator('test')
-        .custom((value) => {
+        .custom(() => {
           throw new Error('Custom function error');
         })
         .validate();
@@ -729,7 +729,7 @@ describe('Snap Validate Tests', () => {
     test('should skip custom validation for optional empty values', () => {
       const result = new BaseValidator('')
         .optional()
-        .custom((value) => false, 'Should not execute')
+        .custom(() => false, 'Should not execute')
         .validate();
 
       expect(result.isValid).toBe(true);
@@ -756,7 +756,7 @@ describe('Snap Validate Tests', () => {
 
     test('should handle async validation with ValidationResult return', async () => {
       const result = await new BaseValidator('test')
-        .customAsync(async (value) => new ValidationResult(false, ['Async error']))
+        .customAsync(async () => new ValidationResult(false, ['Async error']))
         .validateAsync();
 
       expect(result.isValid).toBe(false);
@@ -765,7 +765,7 @@ describe('Snap Validate Tests', () => {
 
     test('should handle async validation with string return', async () => {
       const result = await new BaseValidator('test')
-        .customAsync(async (value) => 'Async custom error')
+        .customAsync(async () => 'Async custom error')
         .validateAsync();
 
       expect(result.isValid).toBe(false);
@@ -774,7 +774,7 @@ describe('Snap Validate Tests', () => {
 
     test('should handle async validation errors gracefully', async () => {
       const result = await new BaseValidator('test')
-        .customAsync(async (value) => {
+        .customAsync(async () => {
           throw new Error('Async function error');
         })
         .validateAsync();
@@ -786,7 +786,7 @@ describe('Snap Validate Tests', () => {
     test('should run sync validations before async validations', async () => {
       const result = await new BaseValidator('')
         .required('Sync error')
-        .customAsync(async (value) => false, 'Async error')
+        .customAsync(async () => false, 'Async error')
         .validateAsync();
 
       expect(result.isValid).toBe(false);
@@ -797,7 +797,7 @@ describe('Snap Validate Tests', () => {
     test('should run async validations after successful sync validations', async () => {
       const result = await new BaseValidator('test')
         .required()
-        .customAsync(async (value) => false, 'Async error')
+        .customAsync(async () => false, 'Async error')
         .validateAsync();
 
       expect(result.isValid).toBe(false);
@@ -807,7 +807,7 @@ describe('Snap Validate Tests', () => {
     test('should skip async validation for optional empty values', async () => {
       const result = await new BaseValidator('')
         .optional()
-        .customAsync(async (value) => false, 'Should not execute')
+        .customAsync(async () => false, 'Should not execute')
         .validateAsync();
 
       expect(result.isValid).toBe(true);
