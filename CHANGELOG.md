@@ -67,7 +67,7 @@ const asyncValidator = new BaseValidator(email)
 const result = await asyncValidator.validateAsync();
 ```
 
-## [0.2.1] - 2025-05-15
+## [0.2.1] - 2025-06-04
 
 ### Fixed
 
@@ -104,7 +104,7 @@ const result = await asyncValidator.validateAsync();
 - **Better phone format handling** - Improved fallback for unknown phone number formats
 - **Enhanced zip code support** - Better handling of international postal code formats
 
-## [0.1.0] - 2025-04-01
+## [0.1.0] - 2025-06-01
 
 ### Added
 - **Initial release** of snap-validate
