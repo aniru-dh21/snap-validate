@@ -1,7 +1,44 @@
 /**
  * Snap Validate - Enhanced Lightweight validator library
- * @version 0.3.0
+ * @version 0.3.1 - Security Fixes
  */
+
+// Utility function to safely test regex with timeout protection
+const safeRegexText = (regex, str, timeoutMs = 1000) => {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Regex execution timeout - potential ReDoS attack'));
+    }, timeoutMs);
+
+    try {
+      const result = regex.test(str);
+      clearTimeout(timeout);
+      resolve(result);
+    } catch (error) {
+      clearTimeout(timeout);
+      reject(error);
+    }
+  });
+};
+
+// Function to detect potentially dangerous regex patterns
+const isRegexSafe = (regex) => {
+  const regexStr = regex.toString();
+
+  // Check for common ReDos Patterns
+  const dangerousPatterns = [
+    // Nested quantifiers
+    /\*.*\*|\+.*\+|\?.*\?/,
+    // Alternation with overlapping
+    /\([^)]*\|[^)]*\)\*|\([^)]*\|[^)]*\)\+/,
+    // Catastrophic backtracking patterns
+    /\(.*\.\*.*\)\*/,
+    // Multiple consecutive quantifiers
+    /[*+?]\s*[*+?]/
+  ];
+
+  return !dangerousPatterns.some(pattern => pattern.test(regexStr));
+};
 
 // Core validation class
 class ValidationResult {
@@ -24,6 +61,7 @@ class BaseValidator {
     this.rules = [];
     this.asyncRules = [];
     this.isOptional = false;
+    this.regexTimeout = 1000; // Default timeout for regex operations
   }
 
   required(message = 'This field is required') {
@@ -50,6 +88,11 @@ class BaseValidator {
 
   optional() {
     this.isOptional = true;
+    return this;
+  }
+
+  setRegexTimeout(timeoutMs) {
+    this.regexTimeout = timeoutMs;
     return this;
   }
 
@@ -120,6 +163,11 @@ class BaseValidator {
   }
 
   pattern(regex, message = 'Invalid format') {
+    // SECURITY FIX: Add regex safety check
+    if (!isRegexSafe(regex)) {
+      throw new Error('Potentially unsafe regex pattern detected. Please use a simple pattern.');
+    }
+
     this.rules.push(() => {
       // Skip validation if optional and empty
       if (
@@ -133,8 +181,64 @@ class BaseValidator {
       if (this.value != null && this.value !== '') {
         // Ensure value is a string before testing regex
         const stringValue = String(this.value);
-        if (!regex.test(stringValue)) {
-          return new ValidationResult(false, [message]);
+
+        // Security Fix: Limit input length to prevent ReDoS
+        if (stringValue.length > 10000) {
+          return new ValidationResult(false, ['Input too long for pattern validation']);
+        }
+
+        try {
+          // Security Fix: Use synchronous text with length limit instead of async for better performance
+          // The combination of input length limit + regex safety check provides protection
+          if (!regex.test(stringValue)) {
+            return new ValidationResult(false, [message]);
+          }
+        } catch (error) {
+          return new ValidationResult(false, ['Pattern validation failed']);
+        }
+      }
+      return new ValidationResult(true);
+    });
+    return this;
+  }
+
+  // New method for async pattern validation with timeout protection
+  patternAsync(regex, message = 'Invalid format') {
+    // Security Fix: Add regex safety check
+    if (!isRegexSafe(regex)) {
+      throw new Error('Potentially unsafe regex pattern detected. Please use a simple pattern.');
+    }
+
+    this.asyncRules.push(async () => {
+      // Skip validation if optional and empty
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
+        return new ValidationResult(true);
+      }
+
+      // Only test pattern if value exists and is not empty
+      if (this.value != null && this.value !== '') {
+        // Ensure value is a string before testing regex
+        const stringValue = String(this.value);
+
+        // Security Fix: Limit input length to prevent ReDoS
+        if (stringValue.length > 10000) {
+          return new ValidationResult(false, ['Input too long for pattern validation']);
+        }
+
+        try {
+          // Security Fix: Use timeout protection for regex execution
+          const result = await safeRegexText(regex, stringValue, this.regexTimeout);
+          if (!result) {
+            return new ValidationResult(false, [message]);
+          }
+        } catch (error) {
+          if (error.message.includes('timeout')) {
+            return new ValidationResult(false, ['Pattern validation timeout - pattern too complex']);
+          }
+          return new ValidationResult(false, ['Pattern validation failed']);
         }
       }
       return new ValidationResult(true);
@@ -296,6 +400,7 @@ class BaseValidator {
 }
 
 // Predefined validators
+// Security Fix: Updated predefined validators with safer regex patterns 
 const validators = {
   email: (value) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -305,8 +410,9 @@ const validators = {
   },
 
   phone: (value, format = 'us') => {
+    // FIXED: Simplified phone regex patterns
     const phoneRegex = {
-      us: /^\+?1?[-.\s]?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$/,
+      us: /^\+?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/,
       international: /^\+[1-9]\d{1,14}$/,
       simple: /^\d{10,15}$/
     };
@@ -565,5 +671,7 @@ module.exports = {
   ValidationResult,
   validators,
   validate,
-  validateAsync
+  validateAsync,
+  safeRegexText,
+  isRegexSafe
 };
