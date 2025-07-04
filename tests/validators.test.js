@@ -1,7 +1,12 @@
-const { validators, validate, BaseValidator, ValidationResult, validateAsync } = require('../src/index');
+const {
+  validators,
+  validate,
+  BaseValidator,
+  ValidationResult,
+  validateAsync
+} = require('../src/index');
 
 describe('Snap Validate Tests', () => {
-
   describe('ValidationResult', () => {
     test('should create valid result', () => {
       const result = new ValidationResult(true);
@@ -104,18 +109,26 @@ describe('Snap Validate Tests', () => {
     });
 
     test('should validate pattern match', () => {
-      const result = new BaseValidator('abc123').pattern(/^[a-z0-9]+$/).validate();
+      const result = new BaseValidator('abc123')
+        .pattern(/^[a-z0-9]+$/)
+        .validate();
       expect(result.isValid).toBe(true);
     });
 
     test('should fail pattern match', () => {
-      const result = new BaseValidator('ABC123!').pattern(/^[a-z0-9]+$/).validate();
+      const result = new BaseValidator('ABC123!')
+        .pattern(/^[a-z0-9]+$/)
+        .validate();
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Invalid format');
     });
 
     test('should skip validation for empty values', () => {
-      const result = new BaseValidator('').min(5).max(3).pattern(/\d+/).validate();
+      const result = new BaseValidator('')
+        .min(5)
+        .max(3)
+        .pattern(/\d+/)
+        .validate();
       expect(result.isValid).toBe(true);
     });
 
@@ -212,7 +225,9 @@ describe('Snap Validate Tests', () => {
     });
 
     test('should validate international phone format', () => {
-      const result = validators.phone('+447911123456', 'international').validate();
+      const result = validators
+        .phone('+447911123456', 'international')
+        .validate();
       expect(result.isValid).toBe(true);
     });
 
@@ -293,7 +308,9 @@ describe('Snap Validate Tests', () => {
     });
 
     test('should validate URL with query parameters', () => {
-      const result = validators.url('https://example.com/path?param=value').validate();
+      const result = validators
+        .url('https://example.com/path?param=value')
+        .validate();
       expect(result.isValid).toBe(true);
     });
 
@@ -331,49 +348,65 @@ describe('Snap Validate Tests', () => {
     test('should reject password without uppercase', () => {
       const result = validators.password('lowercase123').validate();
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Password must contain at least one uppercase letter');
+      expect(result.errors).toContain(
+        'Password must contain at least one uppercase letter'
+      );
     });
 
     test('should reject password without lowercase', () => {
       const result = validators.password('UPPERCASE123').validate();
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Password must contain at least one lowercase letter');
+      expect(result.errors).toContain(
+        'Password must contain at least one lowercase letter'
+      );
     });
 
     test('should reject password without numbers', () => {
       const result = validators.password('StrongPassword').validate();
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Password must contain at least one number');
+      expect(result.errors).toContain(
+        'Password must contain at least one number'
+      );
     });
 
     test('should validate password with custom minimum length', () => {
-      const result = validators.password('Pass123', { minLength: 6 }).validate();
+      const result = validators
+        .password('Pass123', { minLength: 6 })
+        .validate();
       expect(result.isValid).toBe(true);
     });
 
     test('should validate password with special characters when required', () => {
-      const result = validators.password('Pass123!', {
-        requireSpecialChars: true
-      }).validate();
+      const result = validators
+        .password('Pass123!', {
+          requireSpecialChars: true
+        })
+        .validate();
       expect(result.isValid).toBe(true);
     });
 
     test('should reject password without special characters when required', () => {
-      const result = validators.password('StrongPass123', {
-        requireSpecialChars: true
-      }).validate();
+      const result = validators
+        .password('StrongPass123', {
+          requireSpecialChars: true
+        })
+        .validate();
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Password must contain at least one special character');
+      expect(result.errors).toContain(
+        'Password must contain at least one special character'
+      );
     });
 
     test('should validate password with custom options disabled', () => {
-      const result = validators.password('weakpass', {
-        minLength: 4,
-        requireUppercase: false,
-        requireLowercase: true,
-        requireNumbers: false,
-        requireSpecialChars: false
-      }).validate();
+      const result = validators
+        .password('weakpass', {
+          minLength: 4,
+          requireUppercase: false,
+          requireLowercase: true,
+          requireNumbers: false,
+          requireSpecialChars: false
+        })
+        .validate();
       expect(result.isValid).toBe(true);
     });
 
@@ -585,12 +618,18 @@ describe('Snap Validate Tests', () => {
       const result = validate(schema, data);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors.test.errors).toContain('Validation setup error: Validator setup error');
+      expect(result.errors.test.errors).toContain(
+        'Validation setup error: Validator setup error'
+      );
     });
 
     test('should work with BaseValidator instances directly', () => {
       const schema = {
-        username: new BaseValidator('testuser').required().min(3).max(20).pattern(/^[a-zA-Z0-9]+$/)
+        username: new BaseValidator('testuser')
+          .required()
+          .min(3)
+          .max(20)
+          .pattern(/^[a-zA-Z0-9]+$/)
       };
 
       const data = { username: 'testuser' };
@@ -602,7 +641,12 @@ describe('Snap Validate Tests', () => {
 
   describe('Optional Field Validation', () => {
     test('should skip validation for optional empty fields', () => {
-      const result = new BaseValidator('').optional().min(5).max(3).pattern(/\d+/).validate();
+      const result = new BaseValidator('')
+        .optional()
+        .min(5)
+        .max(3)
+        .pattern(/\d+/)
+        .validate();
       expect(result.isValid).toBe(true);
     });
 
@@ -623,7 +667,10 @@ describe('Snap Validate Tests', () => {
     });
 
     test('should validate optional field with valid value', () => {
-      const result = new BaseValidator('hello world').optional().min(5).validate();
+      const result = new BaseValidator('hello world')
+        .optional()
+        .min(5)
+        .validate();
       expect(result.isValid).toBe(true);
     });
   });
@@ -647,7 +694,10 @@ describe('Snap Validate Tests', () => {
 
     test('should apply validation when function condition returns true', () => {
       const result = new BaseValidator('admin')
-        .when((value) => value === 'admin', (value) => new BaseValidator(value).min(10))
+        .when(
+          (value) => value === 'admin',
+          (value) => new BaseValidator(value).min(10)
+        )
         .validate();
 
       expect(result.isValid).toBe(false);
@@ -655,7 +705,10 @@ describe('Snap Validate Tests', () => {
 
     test('should skip validation when function condition returns false', () => {
       const result = new BaseValidator('user')
-        .when((value) => value === 'admin', (value) => new BaseValidator(value).min(10))
+        .when(
+          (value) => value === 'admin',
+          (value) => new BaseValidator(value).min(10)
+        )
         .validate();
 
       expect(result.isValid).toBe(true);
@@ -723,7 +776,9 @@ describe('Snap Validate Tests', () => {
         .validate();
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Custom validation error: Custom function error');
+      expect(result.errors).toContain(
+        'Custom validation error: Custom function error'
+      );
     });
 
     test('should skip custom validation for optional empty values', () => {
@@ -780,7 +835,9 @@ describe('Snap Validate Tests', () => {
         .validateAsync();
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Async validation error: Async function error');
+      expect(result.errors).toContain(
+        'Async validation error: Async function error'
+      );
     });
 
     test('should run sync validations before async validations', async () => {
@@ -818,13 +875,17 @@ describe('Snap Validate Tests', () => {
     test('should handle non-string, non-array, non-number values in min validation', () => {
       const result = new BaseValidator({}).min(5).validate();
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Value must be a string, array, or number');
+      expect(result.errors).toContain(
+        'Value must be a string, array, or number'
+      );
     });
 
     test('should handle non-string, non-array, non-number values in max validation', () => {
       const result = new BaseValidator({}).max(5).validate();
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Value must be a string, array or number');
+      expect(result.errors).toContain(
+        'Value must be a string, array or number'
+      );
     });
 
     test('should convert non-string values to string for pattern validation', () => {
@@ -879,9 +940,13 @@ describe('Snap Validate Tests', () => {
     test('should validate async schema successfully', async () => {
       const schema = {
         email: validators.email,
-        username: (value) => new BaseValidator(value)
-          .required()
-          .customAsync(async (val) => val !== 'taken', 'Username already taken')
+        username: (value) =>
+          new BaseValidator(value)
+            .required()
+            .customAsync(
+              async (val) => val !== 'taken',
+              'Username already taken'
+            )
       };
 
       const data = {
@@ -896,9 +961,13 @@ describe('Snap Validate Tests', () => {
     test('should handle async schema validation errors', async () => {
       const schema = {
         email: validators.email,
-        username: (value) => new BaseValidator(value)
-          .required()
-          .customAsync(async (val) => val !== 'taken', 'Username already taken')
+        username: (value) =>
+          new BaseValidator(value)
+            .required()
+            .customAsync(
+              async (val) => val !== 'taken',
+              'Username already taken'
+            )
       };
 
       const data = {
@@ -914,10 +983,11 @@ describe('Snap Validate Tests', () => {
     test('should handle mixed sync and async validations in schema', async () => {
       const schema = {
         email: validators.email, // sync only
-        username: (value) => new BaseValidator(value)
-          .required() // sync
-          .min(3) // sync
-          .customAsync(async (val) => val !== 'admin', 'Username not allowed') // async
+        username: (value) =>
+          new BaseValidator(value)
+            .required() // sync
+            .min(3) // sync
+            .customAsync(async (val) => val !== 'admin', 'Username not allowed') // async
       };
 
       const data = {
@@ -932,38 +1002,54 @@ describe('Snap Validate Tests', () => {
     });
 
     test('should throw error for invalid schema in async validation', async () => {
-      await expect(validateAsync(null, {})).rejects.toThrow('Schema must be a valid object');
-      await expect(validateAsync('invalid', {})).rejects.toThrow('Schema must be a valid object');
+      await expect(validateAsync(null, {})).rejects.toThrow(
+        'Schema must be a valid object'
+      );
+      await expect(validateAsync('invalid', {})).rejects.toThrow(
+        'Schema must be a valid object'
+      );
     });
 
     test('should throw error for invalid data in async validation', async () => {
       const schema = { email: validators.email };
-      await expect(validateAsync(schema, null)).rejects.toThrow('Data must be a valid object');
-      await expect(validateAsync(schema, 'invalid')).rejects.toThrow('Data must be a valid object');
+      await expect(validateAsync(schema, null)).rejects.toThrow(
+        'Data must be a valid object'
+      );
+      await expect(validateAsync(schema, 'invalid')).rejects.toThrow(
+        'Data must be a valid object'
+      );
     });
   });
 
   describe('Custom Message Validation', () => {
     test('should use custom required message', () => {
-      const result = new BaseValidator('').required('Custom required message').validate();
+      const result = new BaseValidator('')
+        .required('Custom required message')
+        .validate();
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Custom required message');
     });
 
     test('should use custom min message', () => {
-      const result = new BaseValidator('ab').min(5, 'Custom min message').validate();
+      const result = new BaseValidator('ab')
+        .min(5, 'Custom min message')
+        .validate();
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Custom min message');
     });
 
     test('should use custom max message', () => {
-      const result = new BaseValidator('toolong').max(3, 'Custom max message').validate();
+      const result = new BaseValidator('toolong')
+        .max(3, 'Custom max message')
+        .validate();
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Custom max message');
     });
 
     test('should use custom pattern message', () => {
-      const result = new BaseValidator('abc').pattern(/^\d+$/, 'Custom pattern message').validate();
+      const result = new BaseValidator('abc')
+        .pattern(/^\d+$/, 'Custom pattern message')
+        .validate();
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain('Custom pattern message');
     });

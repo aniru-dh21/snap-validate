@@ -29,11 +29,18 @@ class BaseValidator {
   required(message = 'This field is required') {
     this.rules.push(() => {
       // Skip validation if optional and empty
-      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
         return new ValidationResult(true);
       }
 
-      if (this.value === null || this.value === undefined || this.value === '') {
+      if (
+        this.value === null ||
+        this.value === undefined ||
+        this.value === ''
+      ) {
         return new ValidationResult(false, [message]);
       }
       return new ValidationResult(true);
@@ -49,7 +56,10 @@ class BaseValidator {
   min(length, message = `Minimum length is ${length}`) {
     this.rules.push(() => {
       // Skip validation if optional and empty
-      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
         return new ValidationResult(true);
       }
 
@@ -66,7 +76,9 @@ class BaseValidator {
             return new ValidationResult(false, [message]);
           }
         } else {
-          return new ValidationResult(false, ['Value must be a string, array, or number']);
+          return new ValidationResult(false, [
+            'Value must be a string, array, or number'
+          ]);
         }
       }
       return new ValidationResult(true);
@@ -77,7 +89,10 @@ class BaseValidator {
   max(length, message = `Maximum length is ${length}`) {
     this.rules.push(() => {
       // Skip validation if optional and empty
-      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
         return new ValidationResult(true);
       }
 
@@ -94,7 +109,9 @@ class BaseValidator {
             return new ValidationResult(false, [message]);
           }
         } else {
-          return new ValidationResult(false, ['Value must be a string, array or number']);
+          return new ValidationResult(false, [
+            'Value must be a string, array or number'
+          ]);
         }
       }
       return new ValidationResult(true);
@@ -105,7 +122,10 @@ class BaseValidator {
   pattern(regex, message = 'Invalid format') {
     this.rules.push(() => {
       // Skip validation if optional and empty
-      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
         return new ValidationResult(true);
       }
 
@@ -125,7 +145,8 @@ class BaseValidator {
   when(condition, validator) {
     this.rules.push(() => {
       // Evaluate condition
-      const shouldValidate = typeof condition === 'function' ? condition(this.value) : condition;
+      const shouldValidate =
+        typeof condition === 'function' ? condition(this.value) : condition;
 
       if (shouldValidate) {
         // Apply the conditional validator
@@ -146,7 +167,10 @@ class BaseValidator {
   custom(validatorFn, message = 'Custom validation failed') {
     this.rules.push(() => {
       // Skip validation if optional and empty
-      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
         return new ValidationResult(true);
       }
 
@@ -155,7 +179,9 @@ class BaseValidator {
 
         // Handle boolean result
         if (typeof result === 'boolean') {
-          return result ? new ValidationResult(true) : new ValidationResult(false, [message]);
+          return result
+            ? new ValidationResult(true)
+            : new ValidationResult(false, [message]);
         }
 
         // Handle ValidationResult object
@@ -171,7 +197,9 @@ class BaseValidator {
         // Default to true if no clear result
         return new ValidationResult(true);
       } catch (error) {
-        return new ValidationResult(false, [`Custom validation error: ${error.message}`]);
+        return new ValidationResult(false, [
+          `Custom validation error: ${error.message}`
+        ]);
       }
     });
     return this;
@@ -180,7 +208,10 @@ class BaseValidator {
   customAsync(validatorFn, message = 'Async validation failed') {
     this.asyncRules.push(async () => {
       // Skip validation if optional and empty
-      if (this.isOptional && (this.value === null || this.value === undefined || this.value === '')) {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
         return new ValidationResult(true);
       }
 
@@ -189,7 +220,9 @@ class BaseValidator {
 
         // Handle boolean result
         if (typeof result === 'boolean') {
-          return result ? new ValidationResult(true) : new ValidationResult(false, [message]);
+          return result
+            ? new ValidationResult(true)
+            : new ValidationResult(false, [message]);
         }
 
         // Handle ValidationResult object
@@ -205,7 +238,9 @@ class BaseValidator {
         // Default to true if no clear result
         return new ValidationResult(true);
       } catch (error) {
-        return new ValidationResult(false, [`Async validation error: ${error.message}`]);
+        return new ValidationResult(false, [
+          `Async validation error: ${error.message}`
+        ]);
       }
     });
     return this;
@@ -278,7 +313,10 @@ const validators = {
 
     return new BaseValidator(value)
       .required('Phone number is required')
-      .pattern(phoneRegex[format] || phoneRegex.simple, 'Invalid phone number format');
+      .pattern(
+        phoneRegex[format] || phoneRegex.simple,
+        'Invalid phone number format'
+      );
   },
 
   creditCard: (value) => {
@@ -305,13 +343,19 @@ const validators = {
       return sum % 10 === 0;
     };
 
-    const validator = new BaseValidator(value)
-      .required('Credit card number is required');
+    const validator = new BaseValidator(value).required(
+      'Credit card number is required'
+    );
 
     // Add custom validation for credit card format and Luhn check
     validator.rules.push(() => {
       // Skip validation if optional and empty
-      if (validator.isOptional && (validator.value === null || validator.value === undefined || validator.value === '')) {
+      if (
+        validator.isOptional &&
+        (validator.value === null ||
+          validator.value === undefined ||
+          validator.value === '')
+      ) {
         return new ValidationResult(true);
       }
 
@@ -320,7 +364,9 @@ const validators = {
 
         // Check length (13-19 digits)
         if (!/^\d{13,19}$/.test(cleanValue)) {
-          return new ValidationResult(false, ['Credit card must be 13-19 digits']);
+          return new ValidationResult(false, [
+            'Credit card must be 13-19 digits'
+          ]);
         }
 
         // Check Luhn algorithm
@@ -355,16 +401,25 @@ const validators = {
       .min(minLength, `Password must be at least ${minLength} characters`);
 
     if (requireUppercase) {
-      validator.pattern(/[A-Z]/, 'Password must contain at least one uppercase letter');
+      validator.pattern(
+        /[A-Z]/,
+        'Password must contain at least one uppercase letter'
+      );
     }
     if (requireLowercase) {
-      validator.pattern(/[a-z]/, 'Password must contain at least one lowercase letter');
+      validator.pattern(
+        /[a-z]/,
+        'Password must contain at least one lowercase letter'
+      );
     }
     if (requireNumbers) {
       validator.pattern(/\d/, 'Password must contain at least one number');
     }
     if (requireSpecialChars) {
-      validator.pattern(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character');
+      validator.pattern(
+        /[!@#$%^&*(),.?":{}|<>]/,
+        'Password must contain at least one special character'
+      );
     }
 
     return validator;
@@ -412,9 +467,10 @@ const validate = (schema, data) => {
   for (const [field, validator] of Object.entries(schema)) {
     try {
       const fieldValue = data[field];
-      const result = typeof validator === 'function'
-        ? validator(fieldValue).validate()
-        : validator.validate();
+      const result =
+        typeof validator === 'function'
+          ? validator(fieldValue).validate()
+          : validator.validate();
 
       results[field] = result;
       if (!result.isValid) {
@@ -422,7 +478,9 @@ const validate = (schema, data) => {
       }
     } catch (error) {
       // Handle validation setup errors
-      results[field] = new ValidationResult(false, [`Validation setup error: ${error.message}`]);
+      results[field] = new ValidationResult(false, [
+        `Validation setup error: ${error.message}`
+      ]);
       isValid = false;
     }
   }
@@ -463,13 +521,15 @@ const validateAsync = async (schema, data) => {
       let result;
       if (typeof validator === 'function') {
         const validatorInstance = validator(fieldValue);
-        result = validatorInstance.asyncRules.length > 0
-          ? await validatorInstance.validateAsync()
-          : validatorInstance.validate();
+        result =
+          validatorInstance.asyncRules.length > 0
+            ? await validatorInstance.validateAsync()
+            : validatorInstance.validate();
       } else {
-        result = validator.asyncRules && validator.asyncRules.length > 0
-          ? await validator.validateAsync()
-          : validator.validate();
+        result =
+          validator.asyncRules && validator.asyncRules.length > 0
+            ? await validator.validateAsync()
+            : validator.validate();
       }
 
       results[field] = result;
@@ -478,7 +538,9 @@ const validateAsync = async (schema, data) => {
       }
     } catch (error) {
       // Handle validation setup errors
-      results[field] = new ValidationResult(false, [`Validation setup error: ${error.message}`]);
+      results[field] = new ValidationResult(false, [
+        `Validation setup error: ${error.message}`
+      ]);
       isValid = false;
     }
   }
