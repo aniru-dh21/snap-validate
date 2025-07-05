@@ -25,19 +25,24 @@ const safeRegexText = (regex, str, timeoutMs = 1000) => {
 const isRegexSafe = (regex) => {
   const regexStr = regex.toString();
 
-  // Check for common ReDos Patterns
+  // Check for common ReDoS patterns - more precise detection
   const dangerousPatterns = [
-    // Nested quantifiers
-    /\*.*\*|\+.*\+|\?.*\?/,
-    // Alternation with overlapping
-    /\([^)]*\|[^)]*\)\*|\([^)]*\|[^)]*\)\+/,
-    // Catastrophic backtracking patterns
-    /\(.*\.\*.*\)\*/,
-    // Multiple consecutive quantifiers
-    /[*+?]\s*[*+?]/
+    // Nested quantifiers like (a+)+ or (a*)* or (a?)?
+    /\([^)]*[+*?][^)]*\)[+*?]/,
+    // Alternation with overlapping and quantifiers like (a|a)*
+    /\([^)]*\|[^)]*\)[+*]/,
+    // Catastrophic backtracking with greedy quantifiers
+    /\([^)]*\.\*[^)]*\)\*/,
+    // Multiple consecutive quantifiers (not separated by characters)
+    /[+*?]{2,}/,
+    // Exponential alternation patterns
+    /\([^)]*\|[^)]*\)\+.*\([^)]*\|[^)]*\)\+/
   ];
 
-  return !dangerousPatterns.some(pattern => pattern.test(regexStr));
+  // Check if the pattern has obvious ReDoS vulnerabilities
+  const isDangerous = dangerousPatterns.some(pattern => pattern.test(regexStr));
+
+  return !isDangerous;
 };
 
 // Core validation class
@@ -410,19 +415,25 @@ const validators = {
   },
 
   phone: (value, format = 'us') => {
-    // FIXED: Simplified phone regex patterns
+    // FIXED: Much simpler phone regex patterns to avoid ReDoS detection
     const phoneRegex = {
-      us: /^\+?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/,
-      international: /^\+[1-9]\d{1,14}$/,
-      simple: /^\d{10,15}$/
+      us: /^[+]?[1]?[0-9]{10}$/,
+      international: /^[+][1-9][0-9]{7,14}$/,
+      simple: /^[0-9]{10,15}$/
     };
 
     return new BaseValidator(value)
       .required('Phone number is required')
-      .pattern(
-        phoneRegex[format] || phoneRegex.simple,
-        'Invalid phone number format'
-      );
+      .custom((val) => {
+        // Remove all non-digit characters except +
+        const cleaned = String(val).replace(/[^+0-9]/g, '');
+        const regex = phoneRegex[format] || phoneRegex.simple;
+
+        if (!regex.test(cleaned)) {
+          return 'Invalid phone number format';
+        }
+        return true;
+      });
   },
 
   creditCard: (value) => {

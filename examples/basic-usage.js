@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { validators, validate, validateAsync, BaseValidator } = require('../src/index');
+const { validators, validate, validateAsync, BaseValidator, ValidationResult, safeRegexText, isRegexSafe } = require('../src/index');
 
 console.log('🛡️  Snap Validate Examples\n');
 
@@ -111,12 +111,18 @@ console.log('  Alphanumeric:');
 alphanumericTests.forEach(value => {
     const result = validators.alphanumeric(value).validate();
     console.log(`    ${value}: ${result.isValid ? '✅' : '❌'}`);
+    if (!result.isValid) {
+        console.log(`      Errors: ${result.errors.join(', ')}`);
+    }
 });
 
 console.log('  Numeric:');
 numericTests.forEach(value => {
     const result = validators.numeric(value).validate();
     console.log(`    ${value}: ${result.isValid ? '✅' : '❌'}`);
+    if (!result.isValid) {
+        console.log(`      Errors: ${result.errors.join(', ')}`);
+    }
 });
 
 console.log('\n8. Custom Validation with BaseValidator:');
@@ -128,6 +134,9 @@ const customValidator = new BaseValidator('testuser123')
 
 const customResult = customValidator.validate();
 console.log(`  Custom validation: ${customResult.isValid ? '✅' : '❌'}`);
+if (!customResult.isValid) {
+    console.log(`    Errors: ${customResult.errors.join(', ')}`);
+}
 
 console.log('\n9. Optional Fields:');
 const optionalValidator = new BaseValidator('')
@@ -223,7 +232,6 @@ advancedPasswordTests.forEach(({ password, options }) => {
     }
 });
 
-// Async validation example
 console.log('\n14. Async Validation Example:');
 async function runAsyncExample() {
     const asyncValidator = new BaseValidator('testuser')
@@ -248,8 +256,163 @@ async function runAsyncExample() {
     } catch (error) {
         console.log(`  Async validation error: ${error.message}`);
     }
+}
+
+console.log('\n15. Async Pattern Validation:');
+async function runAsyncPatternExample() {
+    const asyncPatternValidator = new BaseValidator('test@example.com')
+        .required('Email is required')
+        .patternAsync(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Invalid email format');
+
+    try {
+        const result = await asyncPatternValidator.validateAsync();
+        console.log(`  Async pattern validation: ${result.isValid ? '✅' : '❌'}`);
+        if (!result.isValid) {
+            console.log(`    Errors: ${result.errors.join(', ')}`);
+        }
+    } catch (error) {
+        console.log(`  Async pattern validation error: ${error.message}`);
+    }
+}
+
+console.log('\n16. Regex Timeout Configuration:');
+const timeoutValidator = new BaseValidator('teststring')
+    .setRegexTimeout(500) // Set timeout to 500ms
+    .required('Value is required')
+    .pattern(/^[a-zA-Z]+$/, 'Only letters allowed');
+
+const timeoutResult = timeoutValidator.validate();
+console.log(`  Regex timeout validation: ${timeoutResult.isValid ? '✅' : '❌'}`);
+
+console.log('\n17. Security Features - Safe Regex Testing:');
+// Test regex safety
+const safeRegex = /^[a-zA-Z0-9]+$/;
+const potentiallyUnsafeRegex = /^(a+)+$/; // This could cause ReDoS
+
+console.log(`  Safe regex check: ${isRegexSafe(safeRegex) ? '✅ Safe' : '❌ Unsafe'}`);
+console.log(`  Potentially unsafe regex check: ${isRegexSafe(potentiallyUnsafeRegex) ? '✅ Safe' : '❌ Unsafe'}`);
+
+// Test safe regex execution
+async function testSafeRegex() {
+    try {
+        const result = await safeRegexText(safeRegex, 'test123', 1000);
+        console.log(`  Safe regex test result: ${result ? '✅' : '❌'}`);
+    } catch (error) {
+        console.log(`  Safe regex test error: ${error.message}`);
+    }
+}
+
+console.log('\n18. Enhanced Error Handling:');
+const errorHandlingValidator = new BaseValidator('test')
+    .required('Value is required')
+    .custom((value) => {
+        if (value === 'test') {
+            throw new Error('Custom validation threw an error');
+        }
+        return true;
+    });
+
+const errorResult = errorHandlingValidator.validate();
+console.log(`  Error handling validation: ${errorResult.isValid ? '✅' : '❌'}`);
+if (!errorResult.isValid) {
+    console.log(`    Errors: ${errorResult.errors.join(', ')}`);
+}
+
+console.log('\n19. ValidationResult Methods:');
+const validationResult = new ValidationResult(true);
+validationResult.addError('Added error message');
+console.log(`  ValidationResult after adding error: ${validationResult.isValid ? '✅' : '❌'}`);
+console.log(`  Errors: ${validationResult.errors.join(', ')}`);
+
+console.log('\n20. Advanced Schema Validation with Async:');
+const advancedSchema = {
+    email: (value) => validators.email(value),
+    username: (value) => new BaseValidator(value)
+        .required('Username is required')
+        .min(3, 'Username must be at least 3 characters')
+        .customAsync(async (val) => {
+            // Simulate async check
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const reserved = ['admin', 'root', 'system'];
+                    resolve(!reserved.includes(val.toLowerCase()) || 'Username is reserved');
+                }, 50);
+            });
+        }),
+    password: (value) => validators.password(value, {
+        minLength: 10,
+        requireSpecialChars: true
+    })
+};
+
+const advancedUserData = {
+    email: 'user@example.com',
+    username: 'normaluser',
+    password: 'SecurePass123!'
+};
+
+async function runAdvancedSchemaExample() {
+    try {
+        const result = await validateAsync(advancedSchema, advancedUserData);
+        console.log(`  Advanced async schema validation: ${result.isValid ? '✅' : '❌'}`);
+
+        if (!result.isValid) {
+            const errors = result.getErrors();
+            console.log('   Validation errors:');
+            Object.entries(errors).forEach(([field, fieldErrors]) => {
+                console.log(`    ${field}: ${fieldErrors.join(', ')}`);
+            });
+        }
+    } catch (error) {
+        console.log(`  Advanced schema validation error: ${error.message}`);
+    }
+}
+
+console.log('\n21. Input Length Limits (Security Feature):');
+const longString = 'a'.repeat(10001); // Exceeds 10000 character limit
+const lengthLimitValidator = new BaseValidator(longString)
+    .required('Value is required')
+    .pattern(/^[a-zA-Z]+$/, 'Only letters allowed');
+
+const lengthResult = lengthLimitValidator.validate();
+console.log(`  Length limit validation: ${lengthResult.isValid ? '✅' : '❌'}`);
+if (!lengthResult.isValid) {
+    console.log(`    Errors: ${lengthResult.errors.join(', ')}`);
+}
+
+console.log('\n22. Number Validation with Min/Max:');
+const numberTests = [
+    { value: 15, min: 10, max: 20 },
+    { value: 5, min: 10, max: 20 },
+    { value: 25, min: 10, max: 20 }
+];
+
+numberTests.forEach(({ value, min, max }) => {
+    const result = new BaseValidator(value)
+        .required('Number is required')
+        .min(min, `Number must be at least ${min}`)
+        .max(max, `Number must be at most ${max}`)
+        .validate();
+
+    console.log(`  ${value} (range ${min}-${max}): ${result.isValid ? '✅' : '❌'}`);
+    if (!result.isValid) {
+        console.log(`    Errors: ${result.errors.join(', ')}`);
+    }
+});
+
+// Run all async examples
+async function runAllAsyncExamples() {
+    console.log('\n--- Starting Async Examples ---');
+
+    await runAsyncExample();
+    await runAsyncPatternExample();
+    await testSafeRegex();
+    await runAdvancedSchemaExample();
 
     console.log('\n✨ All examples completed!');
 }
 
-runAsyncExample();
+// Execute the async examples
+runAllAsyncExamples().catch(error => {
+    console.error('Error running async examples:', error);
+});
