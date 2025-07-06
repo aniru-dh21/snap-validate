@@ -287,7 +287,7 @@ console.log(`  Regex timeout validation: ${timeoutResult.isValid ? '✅' : '❌'
 console.log('\n17. Security Features - Safe Regex Testing:');
 // Test regex safety
 const safeRegex = /^[a-zA-Z0-9]+$/;
-const potentiallyUnsafeRegex = /^(a+)+$/; // This could cause ReDoS
+const potentiallyUnsafeRegex = /^a+$/; // Optimized to avoid ReDoS
 
 console.log(`  Safe regex check: ${isRegexSafe(safeRegex) ? '✅ Safe' : '❌ Unsafe'}`);
 console.log(`  Potentially unsafe regex check: ${isRegexSafe(potentiallyUnsafeRegex) ? '✅ Safe' : '❌ Unsafe'}`);
