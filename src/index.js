@@ -4,8 +4,21 @@
  */
 
 // Utility function to safely test regex with timeout protection
+// Utility function to safely test regex with timeout protection
 const safeRegexTest = (regex, str, timeoutMs = 1000) => {
   return new Promise((resolve, reject) => {
+    // SECURITY FIX: Add input length validation before regex test
+    if (str.length > 10000) {
+      reject(new Error('Input too long for regex validation'));
+      return;
+    }
+
+    // SECURITY FIX: Add regex safety check before execution
+    if (!isRegexSafe(regex)) {
+      reject(new Error('Unsafe regex pattern detected'));
+      return;
+    }
+
     const timeout = setTimeout(() => {
       reject(new Error('Regex execution timeout - potential ReDoS attack'));
     }, timeoutMs);
