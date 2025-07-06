@@ -5,6 +5,89 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-07-06
+
+### 🔒 Security Fixes
+
+#### Critical ReDoS Protection
+- **ReDoS Vulnerability Fixed** - Resolved polynomial regular expression vulnerability in `pattern()` method (Line 116)
+- **Regex Safety Detection** - Added `isRegexSafe()` function to detect potentially dangerous regex patterns before execution
+  - Detects nested quantifiers like `(a+)+` or `(a*)*`
+  - Identifies catastrophic backtracking patterns
+  - Prevents exponential alternation patterns
+  - Blocks multiple consecutive quantifiers
+- **Input Length Protection** - Added 10,000 character limit for regex pattern validation to prevent ReDoS attacks
+- **Timeout Protection** - Added `safeRegexText()` function with configurable timeout protection (default: 1 second)
+
+#### Enhanced Security Features
+- **Pattern Validation Enhancement** - The `pattern()` method now validates regex safety before execution
+- **Async Pattern Validation** - New `patternAsync()` method for complex patterns requiring timeout protection
+- **Configurable Timeouts** - Added `setRegexTimeout()` method for custom timeout settings
+- **Safe Defaults** - All predefined validators now use simplified, safe regex patterns
+
+### Added
+
+#### New Security Methods
+- **`isRegexSafe(regex)`** - Utility function to check if a regex pattern is safe to use
+- **`safeRegexText(regex, str, timeoutMs)`** - Execute regex with timeout protection
+- **`patternAsync(regex, message)`** - Async pattern validation with built-in timeout protection
+- **`setRegexTimeout(timeoutMs)`** - Configure custom timeout for regex operations
+
+#### Enhanced Error Handling
+- **Security Error Messages** - Clear error messages for regex safety violations and timeouts
+- **Timeout Error Handling** - Proper handling of regex timeout scenarios
+- **Pattern Complexity Detection** - Automatic detection and prevention of complex regex patterns
+
+### Enhanced
+
+#### Predefined Validators Security Updates
+- **Phone Validator** - Simplified regex patterns to prevent ReDoS detection
+  - US format: `/^[+]?[1]?[0-9]{10}$/`
+  - International format: `/^[+][1-9][0-9]{7,14}$/`
+  - Simple format: `/^[0-9]{10,15}$/`
+- **All Validators** - Enhanced with safety checks and input length limits
+- **Pattern Testing** - Improved null/undefined handling with string conversion
+
+#### Performance Improvements
+- **Faster Regex Execution** - Optimized regex patterns for better performance
+- **Memory Efficiency** - Reduced memory usage with input length limits
+- **Error Boundary Protection** - Better error handling to prevent crashes
+
+### Examples
+
+#### Security-First Validation
+```javascript
+// Automatic safety checks
+const validator = new BaseValidator(value)
+  .pattern(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed');
+
+// Custom timeout configuration
+const safeValidator = new BaseValidator(value)
+  .setRegexTimeout(5000) // 5 second timeout
+  .patternAsync(/complex-pattern/, 'Error message');
+
+// Manual safety checking
+const { isRegexSafe } = require('snap-validate');
+if (isRegexSafe(userPattern)) {
+  // Safe to use
+} else {
+  // Handle unsafe pattern
+}
+```
+
+#### Async Pattern Validation
+```javascript
+const validator = new BaseValidator(value)
+  .patternAsync(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed');
+
+const result = await validator.validateAsync();
+```
+
+### Security Notes
+- **Breaking Change Prevention** - All security fixes maintain backward compatibility
+- **Performance Impact** - Minimal performance impact with significant security improvements
+- **Default Safety** - All operations are secure by default with configurable options for advanced use cases
+
 ## [0.3.0] - 2025-06-08
 
 ### Added
@@ -139,10 +222,17 @@ This project follows [Semantic Versioning](https://semver.org/):
 - **MINOR** version for backwards-compatible functionality additions
 - **PATCH** version for backwards-compatible bug fixes
 
-### Support Policy
-- **Current version** (0.3.x): Full support with new features and bug fixes
-- **Previous version** (0.2.x): Security fixes and critical bug fixes only
-- **Older versions** (0.1.x): No longer supported, upgrade recommended
+### Security Policy
+- **Current version** (0.3.1): Full support with security fixes, new features, and bug fixes
+- **Previous version** (0.3.0): Security fixes and critical bug fixes only
+- **Older versions** (0.2.x and below): No longer supported, immediate upgrade recommended for security
+
+### Security Alerts
+- **v0.3.1**: Fixes critical ReDoS vulnerability (CVE-pending)
+- **Recommendation**: Upgrade immediately from versions < 0.3.1
 
 ### Migration Guides
 For major version upgrades, see our [Migration Guide](MIGRATION.md) for detailed instructions on updating your code.
+
+### Security Reporting
+If you discover a security vulnerability, please report it privately to our security team at security@snap-validate.com instead of creating a public issue.
