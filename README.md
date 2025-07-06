@@ -7,7 +7,7 @@
 [![npm bundle size](https://img.shields.io/bundlephobia/minzip/snap-validate?style=flat-square)](https://bundlephobia.com/package/snap-validate@latest)
 [![npm downloads](https://img.shields.io/npm/dm/snap-validate.svg?style=flat-square)](https://npm-stat.com/charts.html?package=snap-validate)
 
-A lightning-fast, lightweight validation library for common patterns without heavy dependencies. Perfect for client-side and server-side validation with zero external dependencies.
+A lightning-fast, lightweight validation library for common patterns without heavy dependencies. Perfect for client-side and server-side validation with zero external dependencies and built-in protection against ReDoS (Regular Expression Denial of Service) attacks.
 
 ## Features
 
@@ -19,6 +19,8 @@ A lightning-fast, lightweight validation library for common patterns without hea
 - 🔄 **Async Support**: Full async validation support for database checks and API calls
 - 🎯 **Conditional**: Advanced conditional validation with `when()` and `optional()`
 - 🛠️ **Custom Validators**: Add your own sync and async validation logic
+- 🔒 **Security First**: Built-in protection against ReDoS attacks and unsafe regex patterns
+- 🛡️ **Timeout Protection**: Configurable timeout for regex operations to prevent DoS attacks
 - 🧪 **Well Tested**: Comprehensive test suite with high coverage
 - 📦 **Easy Integration**: Works in Node.js and browsers
 - 🔗 **Chainable API**: Intuitive fluent interface
@@ -53,6 +55,30 @@ const data = {
 
 const result = validate(schema, data);
 console.log(result.isValid); // true
+```
+
+## Security Features
+
+### ReDoS Protection
+
+Snap Validate includes built-in protection against Regular Expression Denial of Service (ReDoS) attacks:
+
+- **Regex Safety Detection**: Automatically detects and prevents potentially dangerous regex patterns
+- **Input Length Limits**: Protects against extremely long input strings (10,000 character limit)
+- **Timeout Protection**: Configurable timeout for regex operations (default: 1 second)
+- **Safe Defaults**: All predefined validators use safe, optimized regex patterns
+
+```javascript
+// Set custom timeout for regex operations
+const validator = new BaseValidator(value)
+  .setRegexTimeout(2000) // 2 second timeout
+  .pattern(/your-pattern/, 'Error message');
+
+// Use async pattern validation for complex patterns with timeout protection
+const validator = new BaseValidator(value)
+  .patternAsync(/complex-pattern/, 'Error message');
+
+const result = await validator.validateAsync();
 ```
 
 ## Available Validators
@@ -214,6 +240,39 @@ const asyncSchema = {
 const asyncResult = await validate.async(asyncSchema, userData);
 ```
 
+## Security and Pattern Validation
+
+### Safe Pattern Validation
+
+```javascript
+const { BaseValidator } = require('snap-validate');
+
+// Synchronous pattern validation with built-in safety checks
+const validator = new BaseValidator(value)
+  .pattern(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed');
+
+// Asynchronous pattern validation with timeout protection
+const asyncValidator = new BaseValidator(value)
+  .patternAsync(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed')
+  .setRegexTimeout(5000); // 5 second timeout
+
+const result = await asyncValidator.validateAsync();
+```
+
+### Configurable Security Settings
+
+```javascript
+const validator = new BaseValidator(value)
+  .setRegexTimeout(3000) // Set custom timeout (3 seconds)
+  .pattern(/your-pattern/, 'Error message');
+
+// The library automatically:
+// - Detects unsafe regex patterns
+// - Limits input length to prevent ReDoS
+// - Applies timeout protection for complex patterns
+// - Provides clear error messages for security violations
+```
+
 ## Custom Validation
 
 ### Using BaseValidator
@@ -284,6 +343,13 @@ try {
 } catch (error) {
   console.log('Validation exception:', error.message);
 }
+
+// Security-related errors
+const unsafeResult = validator.pattern(/potentially-dangerous-pattern/, 'Error').validate();
+if (!unsafeResult.isValid) {
+  console.log('Security errors:', unsafeResult.errors);
+  // Output: ['Potentially unsafe regex pattern detected']
+}
 ```
 
 ## Browser Usage
@@ -310,7 +376,9 @@ try {
 - `required(message?)` - Field is required
 - `min(length, message?)` - Minimum length validation
 - `max(length, message?)` - Maximum length validation
-- `pattern(regex, message?)` - Pattern matching validation
+- `pattern(regex, message?)` - Pattern matching validation with safety checks
+- `patternAsync(regex, message?)` - Async pattern validation with timeout protection
+- `setRegexTimeout(timeoutMs)` - Set custom timeout for regex operations
 - `when(condition, validator)` - Conditional validation
 - `optional()` - Skip validation if empty/null/undefined
 - `custom(fn, message?)` - Custom synchronous validation
@@ -333,6 +401,19 @@ try {
 
 - `validate(schema, data)` - Synchronous schema validation
 - `validate.async(schema, data)` - Asynchronous schema validation
+
+### Security Functions
+
+- `isRegexSafe(regex)` - Check if a regex pattern is safe to use
+- `safeRegexText(regex, str, timeoutMs)` - Execute regex with timeout protection
+
+## Security Best Practices
+
+1. **Use Built-in Validators**: The predefined validators are optimized for security and performance
+2. **Validate Input Length**: Large inputs are automatically limited to prevent ReDoS attacks
+3. **Set Appropriate Timeouts**: Configure regex timeouts based on your application's needs
+4. **Test Custom Patterns**: Use `isRegexSafe()` to check custom regex patterns before deployment
+5. **Handle Async Errors**: Always use try-catch blocks with async validation
 
 ## Contributing
 
@@ -364,6 +445,9 @@ npm run lint
 
 # Format code
 npm run format
+
+# Security audit
+npm audit
 ```
 
 ## License
