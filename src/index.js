@@ -4,7 +4,7 @@
  */
 
 // Utility function to safely test regex with timeout protection
-const safeRegexText = (regex, str, timeoutMs = 1000) => {
+const safeRegexTest = (regex, str, timeoutMs = 1000) => {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Regex execution timeout - potential ReDoS attack'));
@@ -19,6 +19,18 @@ const safeRegexText = (regex, str, timeoutMs = 1000) => {
       reject(error);
     }
   });
+};
+
+// Synchronous safe regex test with input length protection
+const safeRegexTestSync = (regex, str, maxLength = 10000) => {
+  // Limit input length to prevent ReDoS
+  if (str.length > maxLength) {
+    throw new Error('Input too long for pattern validation');
+  }
+
+  // For additional safety, we could add a timeout using a worker thread or 
+  // other mechanism, but for now we rely on input length limiting
+  return regex.test(str);
 };
 
 // Function to detect potentially dangerous regex patterns
@@ -191,20 +203,17 @@ class BaseValidator {
         // Ensure value is a string before testing regex
         const stringValue = String(this.value);
 
-        // Security Fix: Limit input length to prevent ReDoS
-        if (stringValue.length > 10000) {
-          return new ValidationResult(false, [
-            'Input too long for pattern validation'
-          ]);
-        }
-
         try {
-          // Security Fix: Use synchronous text with length limit instead of async for better performance
-          // The combination of input length limit + regex safety check provides protection
-          if (!regex.test(stringValue)) {
+          // SECURITY FIX: Use safe regex test with input length protection
+          if (!safeRegexTestSync(regex, stringValue)) {
             return new ValidationResult(false, [message]);
           }
         } catch (error) {
+          if (error.message.includes('Input too long')) {
+            return new ValidationResult(false, [
+              'Input too long for pattern validation'
+            ]);
+          }
           return new ValidationResult(false, ['Pattern validation failed']);
         }
       }
@@ -245,7 +254,7 @@ class BaseValidator {
 
         try {
           // Security Fix: Use timeout protection for regex execution
-          const result = await safeRegexText(
+          const result = await safeRegexTest(
             regex,
             stringValue,
             this.regexTimeout
@@ -445,7 +454,7 @@ const validators = {
         const cleaned = String(val).replace(/[^+0-9]/g, '');
         const regex = phoneRegex[format] || phoneRegex.simple;
 
-        if (!regex.test(cleaned)) {
+        if (!safeRegexTestSync(regex, cleaned)) {
           return 'Invalid phone number format';
         }
         return true;
@@ -495,8 +504,8 @@ const validators = {
       if (validator.value) {
         const cleanValue = String(validator.value).replace(/\s/g, '');
 
-        // Check length (13-19 digits)
-        if (!/^\d{13,19}$/.test(cleanValue)) {
+        // Check length (13-19 digits) using safe regex
+        if (!safeRegexTestSync(/^\d{13,19}$/, cleanValue)) {
           return new ValidationResult(false, [
             'Credit card must be 13-19 digits'
           ]);
@@ -699,6 +708,7 @@ module.exports = {
   validators,
   validate,
   validateAsync,
-  safeRegexText,
+  safeRegexTest,
+  safeRegexTestSync,
   isRegexSafe
 };
