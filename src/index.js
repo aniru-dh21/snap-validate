@@ -40,7 +40,9 @@ const isRegexSafe = (regex) => {
   ];
 
   // Check if the pattern has obvious ReDoS vulnerabilities
-  const isDangerous = dangerousPatterns.some(pattern => pattern.test(regexStr));
+  const isDangerous = dangerousPatterns.some((pattern) =>
+    pattern.test(regexStr)
+  );
 
   return !isDangerous;
 };
@@ -170,7 +172,9 @@ class BaseValidator {
   pattern(regex, message = 'Invalid format') {
     // SECURITY FIX: Add regex safety check
     if (!isRegexSafe(regex)) {
-      throw new Error('Potentially unsafe regex pattern detected. Please use a simple pattern.');
+      throw new Error(
+        'Potentially unsafe regex pattern detected. Please use a simple pattern.'
+      );
     }
 
     this.rules.push(() => {
@@ -189,7 +193,9 @@ class BaseValidator {
 
         // Security Fix: Limit input length to prevent ReDoS
         if (stringValue.length > 10000) {
-          return new ValidationResult(false, ['Input too long for pattern validation']);
+          return new ValidationResult(false, [
+            'Input too long for pattern validation'
+          ]);
         }
 
         try {
@@ -211,7 +217,9 @@ class BaseValidator {
   patternAsync(regex, message = 'Invalid format') {
     // Security Fix: Add regex safety check
     if (!isRegexSafe(regex)) {
-      throw new Error('Potentially unsafe regex pattern detected. Please use a simple pattern.');
+      throw new Error(
+        'Potentially unsafe regex pattern detected. Please use a simple pattern.'
+      );
     }
 
     this.asyncRules.push(async () => {
@@ -230,18 +238,26 @@ class BaseValidator {
 
         // Security Fix: Limit input length to prevent ReDoS
         if (stringValue.length > 10000) {
-          return new ValidationResult(false, ['Input too long for pattern validation']);
+          return new ValidationResult(false, [
+            'Input too long for pattern validation'
+          ]);
         }
 
         try {
           // Security Fix: Use timeout protection for regex execution
-          const result = await safeRegexText(regex, stringValue, this.regexTimeout);
+          const result = await safeRegexText(
+            regex,
+            stringValue,
+            this.regexTimeout
+          );
           if (!result) {
             return new ValidationResult(false, [message]);
           }
         } catch (error) {
           if (error.message.includes('timeout')) {
-            return new ValidationResult(false, ['Pattern validation timeout - pattern too complex']);
+            return new ValidationResult(false, [
+              'Pattern validation timeout - pattern too complex'
+            ]);
           }
           return new ValidationResult(false, ['Pattern validation failed']);
         }
@@ -405,7 +421,7 @@ class BaseValidator {
 }
 
 // Predefined validators
-// Security Fix: Updated predefined validators with safer regex patterns 
+// Security Fix: Updated predefined validators with safer regex patterns
 const validators = {
   email: (value) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
