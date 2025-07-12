@@ -4,6 +4,14 @@
   "description": "Lightweight validation library for common patterns without heavy dependencies",
   "main": "src/index.js",
   "types": "types/index.d.ts",
+  "typings": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "require": "./src/index.js",
+      "import": "./src/index.js"
+    }
+  },
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
@@ -14,7 +22,12 @@
     "prepare": "husky install",
     "prepublishOnly": "npm test && npm run lint",
     "build": "echo 'No build step required for this library'",
-    "example": "node examples/basic-usage.js"
+    "example": "node examples/basic-usage.js",
+    "type-check": "tsc --noEmit",
+    "test-types": "tsc test-types.ts --noEmit",
+    "validate-types": "tsc --noEmit && echo 'TypeScript definitions are valid!'",
+    "lint-types": "eslint types/**/*.ts",
+    "check-exports": "node -e \"console.log(Object.keys(require('./src/index.js')))\""
   },
   "keywords": [
     "validation",

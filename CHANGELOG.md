@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2025-07-12
+
+### Added
+
+#### TypeScript Support Enhancement
+- **Complete TypeScript Definitions** - Added comprehensive TypeScript definitions (`.d.ts`) for all library functionality
+- **Enhanced Type Safety** - Full type coverage for all validators, methods, and utility functions
+- **Security Function Types** - Proper typing for security utilities (`isRegexSafe`, `safeRegexTest`, `safeRegexTestSync`)
+- **Async Validation Types** - Complete type definitions for async validation methods and promises
+
+#### New TypeScript Features
+- **`regexTimeout` Property** - Added to BaseValidator class with proper typing
+- **`setRegexTimeout()` Method** - Type-safe timeout configuration for regex operations
+- **`patternAsync()` Method** - Fully typed asynchronous pattern validation with timeout protection
+- **Security Utility Types** - Comprehensive typing for all security-related functions
+
+### Enhanced
+
+#### Developer Experience
+- **IntelliSense Support** - Full autocomplete and type checking in TypeScript and JavaScript IDEs
+- **Type Documentation** - Detailed JSDoc comments for all methods and parameters
+- **Error Prevention** - Compile-time type checking prevents common validation errors
+- **Better IDE Integration** - Enhanced development experience with proper type hints
+
+#### API Consistency
+- **Consistent Return Types** - All validation methods now have proper return type definitions
+- **Optional Parameters** - Correctly typed optional parameters throughout the API
+- **Promise Types** - Proper Promise typing for all async operations
+
+### Examples
+
+#### TypeScript Usage
+```typescript
+import { validators, BaseValidator, ValidationResult } from 'snap-validate';
+
+// Full type safety
+const validator: BaseValidator = new BaseValidator('test')
+  .required()
+  .setRegexTimeout(5000)
+  .patternAsync(/^[a-zA-Z]+$/, 'Letters only');
+
+const result: Promise<ValidationResult> = validator.validateAsync();
+
+// Security utilities with types
+const isSafe: boolean = isRegexSafe(/^[a-zA-Z]+$/);
+const testResult: Promise<boolean> = safeRegexTest(/pattern/, 'test', 1000);
+
 ## [0.3.1] - 2025-07-06
 
 ### 🔒 Security Fixes

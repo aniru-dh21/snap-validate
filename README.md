@@ -24,6 +24,8 @@ A lightning-fast, lightweight validation library for common patterns without hea
 - 🧪 **Well Tested**: Comprehensive test suite with high coverage
 - 📦 **Easy Integration**: Works in Node.js and browsers
 - 🔗 **Chainable API**: Intuitive fluent interface
+- 📘 **TypeScript Ready**: Full TypeScript definitions with comprehensive type safety
+- 🔧 **IDE Support**: Enhanced IntelliSense and autocomplete for better developer experience
 
 ## Installation
 
@@ -56,6 +58,26 @@ const data = {
 const result = validate(schema, data);
 console.log(result.isValid); // true
 ```
+
+## TypeScript Support
+
+Snap Validate includes comprehensive TypeScript definitions for enhanced development experience:
+
+```typescript
+import { validators, BaseValidator, ValidationResult } from 'snap-validate';
+
+// Full type safety and IntelliSense support
+const validator: BaseValidator = new BaseValidator('test-value')
+  .required()
+  .setRegexTimeout(5000)
+  .patternAsync(/^[a-zA-Z]+$/, 'Letters only');
+
+const result: Promise<ValidationResult> = validator.validateAsync();
+
+// Type-safe security utilities
+import { isRegexSafe, safeRegexTest } from 'snap-validate';
+const isSafe: boolean = isRegexSafe(/^[a-zA-Z]+$/);
+const testResult: Promise<boolean> = safeRegexTest(/pattern/, 'test', 1000);
 
 ## Security Features
 
