@@ -1,6 +1,6 @@
 /**
  * Snap Validate - Enhanced Lightweight validator library
- * @version 0.3.2 - Typescript Patch
+ * @version 0.3.3 - Typescript Patch
  */
 
 // Utility function to safely test regex with timeout protection
@@ -40,7 +40,7 @@ const safeRegexTestSync = (regex, str, maxLength = 10000) => {
     throw new Error('Input too long for pattern validation');
   }
 
-  // For additional safety, we could add a timeout using a worker thread or 
+  // For additional safety, we could add a timeout using a worker thread or
   // other mechanism, but for now we rely on input length limiting
   return regex.test(str);
 };
