@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.2] - 2025-07-13
+## [0.3.3] - 2025-07-13
 
 ### 🔧 TypeScript Support
 
@@ -331,7 +331,7 @@ This project follows [Semantic Versioning](https://semver.org/):
 - **PATCH** version for backwards-compatible bug fixes
 
 ### Security Policy
-- **Current version** (0.3.2): Full support with security fixes, new features, and bug fixes
+- **Current version** (0.3.3): Full support with security fixes, new features, and bug fixes
 - **Previous version** (0.3.1): Security fixes and critical bug fixes only
 - **Older versions** (0.3.0 and below): Limited support, upgrade recommended for latest features
 
