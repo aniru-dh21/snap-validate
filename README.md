@@ -6,6 +6,7 @@
 [![install size](https://img.shields.io/badge/dynamic/json?url=https://packagephobia.com/v2/api.json?p=snap-validate&query=$.install.pretty&label=install%20size&style=flat-square)](https://packagephobia.now.sh/result?p=snap-validate)
 [![npm bundle size](https://img.shields.io/bundlephobia/minzip/snap-validate?style=flat-square)](https://bundlephobia.com/package/snap-validate@latest)
 [![npm downloads](https://img.shields.io/npm/dm/snap-validate.svg?style=flat-square)](https://npm-stat.com/charts.html?package=snap-validate)
+![Codecov](https://img.shields.io/codecov/c/github/aniru-dh21/snap-validate)
 
 A lightning-fast, lightweight validation library for common patterns without heavy dependencies. Perfect for client-side and server-side validation with zero external dependencies and built-in protection against ReDoS (Regular Expression Denial of Service) attacks.
 
