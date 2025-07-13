@@ -1,6 +1,6 @@
 {
   "name": "snap-validate",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Lightweight validation library for common patterns without heavy dependencies",
   "main": "src/index.js",
   "types": "types/index.d.ts",
