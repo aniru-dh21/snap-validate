@@ -342,5 +342,5 @@ This project follows [Semantic Versioning](https://semver.org/):
 ### Migration Guides
 For major version upgrades, see our [Migration Guide](MIGRATION.md) for detailed instructions on updating your code.
 
-### Security Reporting
-If you discover a security vulnerability, please report it privately to our security team at security@snap-validate.com instead of creating a public issue.
+<!--### Security Reporting
+If you discover a security vulnerability, please report it privately to our security team at security@snap-validate.com instead of creating a public issue.-->
