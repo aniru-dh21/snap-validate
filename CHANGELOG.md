@@ -5,52 +5,113 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.2] - 2025-07-12
+## [0.3.2] - 2025-07-13
+
+### 🔧 TypeScript Support
+
+#### Complete TypeScript Definitions
+- **Full Type Safety** - Added comprehensive TypeScript definitions for all library functions and classes
+- **Type-Safe Validation** - Complete type definitions for `BaseValidator` class with all methods
+- **Schema Validation Types** - Proper typing for schema validation functions and results
+- **Security Function Types** - Type definitions for all security utility functions
+
+#### Enhanced Developer Experience
+- **IntelliSense Support** - Full IDE support with auto-completion and parameter hints
+- **Type Checking** - Compile-time validation of method usage and parameter types
+- **JSDoc Integration** - Rich documentation comments visible in IDE tooltips
+- **Generic Support** - Proper generic types for flexible validation workflows
 
 ### Added
 
-#### TypeScript Support Enhancement
-- **Complete TypeScript Definitions** - Added comprehensive TypeScript definitions (`.d.ts`) for all library functionality
-- **Enhanced Type Safety** - Full type coverage for all validators, methods, and utility functions
-- **Security Function Types** - Proper typing for security utilities (`isRegexSafe`, `safeRegexTest`, `safeRegexTestSync`)
-- **Async Validation Types** - Complete type definitions for async validation methods and promises
+#### TypeScript Definitions
+- **`BaseValidator<T>`** - Generic base validator class with full method typing
+- **`ValidationResult`** - Interface for validation results with `isValid` and `errors` properties
+- **`ValidatorFunction`** - Type for validator functions used in schemas
+- **`ValidationSchema`** - Type for validation schema objects
+- **`PasswordOptions`** - Interface for password validation configuration
+- **Security utility function types** - Complete typing for `isRegexSafe`, `safeRegexTest`, etc.
 
-#### New TypeScript Features
-- **`regexTimeout` Property** - Added to BaseValidator class with proper typing
-- **`setRegexTimeout()` Method** - Type-safe timeout configuration for regex operations
-- **`patternAsync()` Method** - Fully typed asynchronous pattern validation with timeout protection
-- **Security Utility Types** - Comprehensive typing for all security-related functions
+#### Type-Safe Methods
+- **Async validation typing** - Proper `Promise<ValidationResult>` return types
+- **Conditional validation** - Type-safe `when()` method with condition functions
+- **Custom validator typing** - Proper types for sync and async custom validation functions
+- **Pattern validation** - Type-safe regex pattern validation with security checks
 
 ### Enhanced
 
-#### Developer Experience
-- **IntelliSense Support** - Full autocomplete and type checking in TypeScript and JavaScript IDEs
-- **Type Documentation** - Detailed JSDoc comments for all methods and parameters
-- **Error Prevention** - Compile-time type checking prevents common validation errors
-- **Better IDE Integration** - Enhanced development experience with proper type hints
+#### Developer Experience Improvements
+- **IDE Integration** - Full auto-completion support in VS Code, WebStorm, and other TypeScript-aware editors
+- **Type Inference** - Smart type inference for chained validation methods
+- **Error Prevention** - Compile-time errors for invalid method usage
+- **Documentation** - Rich JSDoc comments for all methods and interfaces
 
-#### API Consistency
-- **Consistent Return Types** - All validation methods now have proper return type definitions
-- **Optional Parameters** - Correctly typed optional parameters throughout the API
-- **Promise Types** - Proper Promise typing for all async operations
+#### Build and Development
+- **TypeScript Testing** - Added type checking to development workflow
+- **Export Organization** - Clean module exports with proper TypeScript visibility
+- **Type Validation** - Automated type checking in CI/CD pipeline
 
 ### Examples
 
-#### TypeScript Usage
+#### Type-Safe Validation
 ```typescript
-import { validators, BaseValidator, ValidationResult } from 'snap-validate';
+import { BaseValidator, validators, validate } from 'snap-validate';
 
-// Full type safety
-const validator: BaseValidator = new BaseValidator('test')
-  .required()
-  .setRegexTimeout(5000)
-  .patternAsync(/^[a-zA-Z]+$/, 'Letters only');
+// Fully typed validator with auto-completion
+const validator = new BaseValidator('test-value')
+  .required('This field is required')
+  .min(5, 'Must be at least 5 characters')
+  .pattern(/^[a-zA-Z]+$/, 'Only letters allowed');
 
-const result: Promise<ValidationResult> = validator.validateAsync();
+// Type-safe result handling
+const result = validator.validate();
+if (!result.isValid) {
+  console.log(result.errors); // string[]
+}
+```
 
-// Security utilities with types
-const isSafe: boolean = isRegexSafe(/^[a-zA-Z]+$/);
-const testResult: Promise<boolean> = safeRegexTest(/pattern/, 'test', 1000);
+#### Schema Validation with Types
+```typescript
+import { ValidationSchema, validate } from 'snap-validate';
+
+const schema: ValidationSchema = {
+  email: validators.email,
+  phone: (value) => validators.phone(value, 'us'),
+  password: (value) => validators.password(value, {
+    minLength: 8,
+    requireUppercase: true,
+    requireNumbers: true
+  })
+};
+
+const result = validate(schema, userData);
+// Full type safety and auto-completion
+```
+
+#### Async Validation Types
+```typescript
+import { BaseValidator } from 'snap-validate';
+
+const asyncValidator = new BaseValidator(email)
+  .email()
+  .customAsync(async (email: string) => {
+    const exists = await checkEmailExists(email);
+    return !exists || 'Email already exists';
+  }, 'Email validation failed');
+
+// Properly typed Promise return
+const result: Promise<ValidationResult> = asyncValidator.validateAsync();
+```
+
+### Developer Notes
+- **Zero Runtime Impact** - TypeScript definitions add no runtime overhead
+- **Backward Compatibility** - All existing JavaScript usage continues to work unchanged
+- **IDE Support** - Enhanced development experience with full IntelliSense support
+- **Type Safety** - Compile-time validation prevents common usage errors
+
+### Migration for TypeScript Users
+- **No Breaking Changes** - Existing code continues to work without modifications
+- **Gradual Adoption** - TypeScript users can gradually add type annotations
+- **IDE Benefits** - Immediate improvement in development experience with auto-completion
 
 ## [0.3.1] - 2025-07-06
 
@@ -270,9 +331,9 @@ This project follows [Semantic Versioning](https://semver.org/):
 - **PATCH** version for backwards-compatible bug fixes
 
 ### Security Policy
-- **Current version** (0.3.1): Full support with security fixes, new features, and bug fixes
-- **Previous version** (0.3.0): Security fixes and critical bug fixes only
-- **Older versions** (0.2.x and below): No longer supported, immediate upgrade recommended for security
+- **Current version** (0.3.2): Full support with security fixes, new features, and bug fixes
+- **Previous version** (0.3.1): Security fixes and critical bug fixes only
+- **Older versions** (0.3.0 and below): Limited support, upgrade recommended for latest features
 
 ### Security Alerts
 - **v0.3.1**: Fixes critical ReDoS vulnerability (CVE-pending)

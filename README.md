@@ -11,26 +11,34 @@ A lightning-fast, lightweight validation library for common patterns without hea
 
 ## Features
 
-- ⚡ **Lightning Fast**: Optimized for speed and performance
-- 🚀 **Lightweight**: No external dependencies, minimal footprint
-- 🔧 **Flexible**: Chainable validation rules and custom validators
-- 📧 **Common Patterns**: Email, phone, credit card, URL, password validation
-- 🌍 **International**: Support for different formats (US/International phone, postal codes)
-- 🔄 **Async Support**: Full async validation support for database checks and API calls
-- 🎯 **Conditional**: Advanced conditional validation with `when()` and `optional()`
-- 🛠️ **Custom Validators**: Add your own sync and async validation logic
-- 🔒 **Security First**: Built-in protection against ReDoS attacks and unsafe regex patterns
-- 🛡️ **Timeout Protection**: Configurable timeout for regex operations to prevent DoS attacks
-- 🧪 **Well Tested**: Comprehensive test suite with high coverage
-- 📦 **Easy Integration**: Works in Node.js and browsers
-- 🔗 **Chainable API**: Intuitive fluent interface
-- 📘 **TypeScript Ready**: Full TypeScript definitions with comprehensive type safety
-- 🔧 **IDE Support**: Enhanced IntelliSense and autocomplete for better developer experience
+- ⚡ **Lightning Fast**: Optimized for speed and performance  
+- 🚀 **Lightweight**: No external dependencies, minimal footprint  
+- 🔧 **Flexible**: Chainable validation rules and custom validators  
+- 📧 **Common Patterns**: Email, phone, credit card, URL, password validation  
+- 🌍 **International**: Support for different formats (US/International phone, postal codes)  
+- 🔄 **Async Support**: Full async validation support for database checks and API calls  
+- 🎯 **Conditional**: Advanced conditional validation with `when()` and `optional()`  
+- 🛠️ **Custom Validators**: Add your own sync and async validation logic  
+- 🔒 **Security First**: Built-in protection against ReDoS attacks and unsafe regex patterns  
+- 🛡️ **Timeout Protection**: Configurable timeout for regex operations to prevent DoS attacks  
+- 🧪 **Well Tested**: Comprehensive test suite with high coverage  
+- 📦 **Easy Integration**: Works in Node.js and browsers  
+- 🔗 **Chainable API**: Intuitive fluent interface  
+- 📘 **TypeScript Support**: Complete TypeScript definitions with full IntelliSense support  
 
 ## Installation
 
 ```bash
 npm install snap-validate
+```
+
+### TypeScript
+
+For TypeScript projects, types are included automatically:
+
+```bash
+npm install snap-validate
+# Types are included - no need for @types/snap-validate
 ```
 
 ## Quick Start
@@ -61,23 +69,49 @@ console.log(result.isValid); // true
 
 ## TypeScript Support
 
-Snap Validate includes comprehensive TypeScript definitions for enhanced development experience:
+Snap Validate includes comprehensive TypeScript definitions for enhanced developer experience:
 
 ```typescript
-import { validators, BaseValidator, ValidationResult } from 'snap-validate';
+import { BaseValidator, validators, validate, ValidationResult } from 'snap-validate';
 
-// Full type safety and IntelliSense support
-const validator: BaseValidator = new BaseValidator('test-value')
-  .required()
-  .setRegexTimeout(5000)
-  .patternAsync(/^[a-zA-Z]+$/, 'Letters only');
+// Full type safety and auto-completion
+const validator = new BaseValidator('test-value')
+  .required('This field is required')
+  .min(5, 'Must be at least 5 characters')
+  .pattern(/^[a-zA-Z]+$/, 'Only letters allowed');
 
-const result: Promise<ValidationResult> = validator.validateAsync();
+// Type-safe result handling
+const result: ValidationResult = validator.validate();
 
-// Type-safe security utilities
-import { isRegexSafe, safeRegexTest } from 'snap-validate';
-const isSafe: boolean = isRegexSafe(/^[a-zA-Z]+$/);
-const testResult: Promise<boolean> = safeRegexTest(/pattern/, 'test', 1000);
+// Schema validation with types
+interface UserData {
+  email: string;
+  phone: string;
+  password: string;
+}
+
+const userData: UserData = {
+  email: 'john@example.com',
+  phone: '1234567890',
+  password: 'StrongPass123'
+};
+
+const schema = {
+  email: validators.email,
+  phone: (value: string) => validators.phone(value, 'us'),
+  password: validators.password
+};
+
+const result = validate(schema, userData);
+```
+
+Features:
+
+- Complete type definitions for all classes and functions  
+- IntelliSense support in VS Code, WebStorm, and other editors  
+- Compile-time validation prevents common usage errors  
+- Generic support for flexible validation workflows  
+- Rich JSDoc comments for comprehensive documentation  
 
 ## Security Features
 
@@ -419,6 +453,14 @@ if (!unsafeResult.isValid) {
 - `validators.numeric(value)`
 - `validators.zipCode(value, country?)`
 
+### TypeScript Types
+
+- `ValidationResult` - Interface for validation results  
+- `ValidatorFunction` - Type for validator functions used in schemas  
+- `ValidationSchema` - Type for validation schema objects  
+- `PasswordOptions` - Interface for password validation configuration  
+- `BaseValidator<T>` - Generic base validator class
+
 ### Validation Functions
 
 - `validate(schema, data)` - Synchronous schema validation
@@ -470,6 +512,12 @@ npm run format
 
 # Security audit
 npm audit
+
+# Type checking (for TypeScript users)
+npm run type-check
+
+# Validate TypeScript definitions
+npm run validate-types
 ```
 
 ## License
