@@ -63,6 +63,7 @@ declare module 'snap-validate' {
     rules: Array<() => ValidationResult>;
     asyncRules: Array<() => Promise<ValidationResult>>;
     isOptional: boolean;
+    regexTimeout: number;
 
     /**
      * Make field required
@@ -75,6 +76,11 @@ declare module 'snap-validate' {
     optional(): BaseValidator;
 
     /**
+     * Set timeout for regex operations in milliseconds
+     */
+    setRegexTimeout(timeoutMs: number): BaseValidator;
+
+    /**
      * Set minimum length/value
      */
     min(length: number, message?: string): BaseValidator;
@@ -85,9 +91,14 @@ declare module 'snap-validate' {
     max(length: number, message?: string): BaseValidator;
 
     /**
-     * Validate against regex pattern
+     * Validate against regex pattern (synchronous)
      */
     pattern(regex: RegExp, message?: string): BaseValidator;
+
+    /**
+     * Validate against regex pattern with timeout protection (asynchronous)
+     */
+    patternAsync(regex: RegExp, message?: string): BaseValidator;
 
     /**
      * Conditional validation
@@ -177,4 +188,27 @@ declare module 'snap-validate' {
     schema: Schema,
     data: { [key: string]: any }
   ): Promise<SchemaValidationResult>;
+
+  /**
+   * Safely test regex with timeout protection (asynchronous)
+   */
+  export function safeRegexTest(
+    regex: RegExp,
+    str: string,
+    timeoutMs?: number
+  ): Promise<boolean>;
+
+  /**
+   * Safely test regex with input length protection (synchronous)
+   */
+  export function safeRegexTestSync(
+    regex: RegExp,
+    str: string,
+    maxLength?: number
+  ): boolean;
+
+  /**
+   * Check if a regex pattern is safe to use (ReDoS protection)
+   */
+  export function isRegexSafe(regex: RegExp): boolean;
 }

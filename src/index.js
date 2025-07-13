@@ -1,9 +1,8 @@
 /**
  * Snap Validate - Enhanced Lightweight validator library
- * @version 0.3.1 - Security Fixes
+ * @version 0.3.2 - Typescript Patch
  */
 
-// Utility function to safely test regex with timeout protection
 // Utility function to safely test regex with timeout protection
 const safeRegexTest = (regex, str, timeoutMs = 1000) => {
   return new Promise((resolve, reject) => {
