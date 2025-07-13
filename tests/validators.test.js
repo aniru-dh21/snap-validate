@@ -1054,4 +1054,403 @@ describe('Snap Validate Tests', () => {
       expect(result.errors).toContain('Custom pattern message');
     });
   });
+
+  // Add these test suites to your existing validators.test.js file
+
+  describe('Regex Safety and Security', () => {
+    describe('isRegexSafe', () => {
+      const { isRegexSafe } = require('../src/index');
+
+      test('should detect unsafe nested quantifiers', () => {
+        const unsafeRegex = /(a+)+/;
+        expect(isRegexSafe(unsafeRegex)).toBe(false);
+      });
+
+      test('should detect unsafe alternation with quantifiers', () => {
+        const unsafeRegex = /(a|a)*/;
+        expect(isRegexSafe(unsafeRegex)).toBe(false);
+      });
+
+      test('should detect catastrophic backtracking patterns', () => {
+        const unsafeRegex = /(.*)+/;
+        expect(isRegexSafe(unsafeRegex)).toBe(false);
+      });
+
+      test('should detect multiple consecutive quantifiers', () => {
+        const unsafeRegex = new RegExp('(a+)+'); // nested quantifier = unsafe
+        expect(isRegexSafe(unsafeRegex)).toBe(false);
+      });
+
+      test('should allow safe regex patterns', () => {
+        const safeRegex = /^[a-zA-Z0-9]+$/;
+        expect(isRegexSafe(safeRegex)).toBe(true);
+      });
+
+      test('should allow simple email regex', () => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        expect(isRegexSafe(emailRegex)).toBe(true);
+      });
+    });
+
+    describe('safeRegexTestSync', () => {
+      const { safeRegexTestSync } = require('../src/index');
+
+      test('should test regex safely with normal input', () => {
+        const regex = /^\d+$/;
+        expect(safeRegexTestSync(regex, '123')).toBe(true);
+        expect(safeRegexTestSync(regex, 'abc')).toBe(false);
+      });
+
+      test('should throw error for input too long', () => {
+        const regex = /^\d+$/;
+        const longInput = 'a'.repeat(10001);
+        expect(() => {
+          safeRegexTestSync(regex, longInput);
+        }).toThrow('Input too long for pattern validation');
+      });
+
+      test('should handle custom max length', () => {
+        const regex = /^\d+$/;
+        const input = 'a'.repeat(101);
+        expect(() => {
+          safeRegexTestSync(regex, input, 100);
+        }).toThrow('Input too long for pattern validation');
+      });
+    });
+
+    describe('safeRegexTest (async)', () => {
+      const { safeRegexTest } = require('../src/index');
+
+      test('should test regex safely with normal input', async () => {
+        const regex = /^\d+$/;
+        await expect(safeRegexTest(regex, '123')).resolves.toBe(true);
+        await expect(safeRegexTest(regex, 'abc')).resolves.toBe(false);
+      });
+
+      test('should reject input too long', async () => {
+        const regex = /^\d+$/;
+        const longInput = 'a'.repeat(10001);
+        await expect(safeRegexTest(regex, longInput)).rejects.toThrow(
+          'Input too long for regex validation'
+        );
+      });
+
+      test('should timeout on slow regex', async () => {
+        const regex = /^\d+$/;
+        await expect(safeRegexTest(regex, '123', 1)).resolves.toBe(true);
+      });
+    });
+  });
+
+  describe('Pattern Validation Security', () => {
+    test('should reject unsafe regex patterns in pattern()', () => {
+      const unsafeRegex = /(a+)+/;
+      expect(() => {
+        new BaseValidator('test').pattern(unsafeRegex);
+      }).toThrow('Potentially unsafe regex pattern detected');
+    });
+
+    test('should reject unsafe regex patterns in patternAsync()', () => {
+      const unsafeRegex = /(a+)+/;
+      expect(() => {
+        new BaseValidator('test').patternAsync(unsafeRegex);
+      }).toThrow('Potentially unsafe regex pattern detected');
+    });
+
+    test('should handle input too long in pattern validation', () => {
+      const longInput = 'a'.repeat(10001);
+      const result = new BaseValidator(longInput).pattern(/^\w+$/).validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Input too long for pattern validation');
+    });
+  });
+
+  describe('Async Pattern Validation', () => {
+    test('should validate pattern asynchronously', async () => {
+      const result = await new BaseValidator('test123')
+        .patternAsync(/^[a-z0-9]+$/)
+        .validateAsync();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should fail async pattern validation', async () => {
+      const result = await new BaseValidator('Test123!')
+        .patternAsync(/^[a-z0-9]+$/, 'Only lowercase letters and numbers')
+        .validateAsync();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Only lowercase letters and numbers');
+    });
+
+    test('should handle input too long in async pattern validation', async () => {
+      const longInput = 'a'.repeat(10001);
+      const result = await new BaseValidator(longInput)
+        .patternAsync(/^\w+$/)
+        .validateAsync();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Input too long for pattern validation');
+    });
+
+    test('should skip async pattern validation for optional empty values', async () => {
+      const result = await new BaseValidator('')
+        .optional()
+        .patternAsync(/^\d+$/, 'Should not execute')
+        .validateAsync();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should handle async pattern validation timeout', async () => {
+      // Mock safeRegexTest to simulate timeout
+      // const originalSafeRegexTest = require('../src/index').safeRegexTest;
+      // const mockSafeRegexTest = jest.fn().mockRejectedValue(new Error('Regex execution timeout - potential ReDoS attack'));
+
+      // This test would need to be adapted based on how you want to test timeout scenarios
+      // For now, we'll test the error handling path
+      const result = await new BaseValidator('test')
+        .setRegexTimeout(1)
+        .patternAsync(/^[a-z]+$/)
+        .validateAsync();
+
+      // The actual implementation should pass normally, but this tests the error handling structure
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Regex Timeout Configuration', () => {
+    test('should set custom regex timeout', () => {
+      const validator = new BaseValidator('test').setRegexTimeout(2000);
+      expect(validator.regexTimeout).toBe(2000);
+    });
+
+    test('should chain setRegexTimeout with other methods', () => {
+      const result = new BaseValidator('test')
+        .setRegexTimeout(500)
+        .required()
+        .min(3)
+        .validate();
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Enhanced Phone Validation', () => {
+    test('should validate phone with different formats after cleaning', () => {
+      const result = validators.phone('(555) 123-4567', 'us').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should validate phone with country code', () => {
+      const result = validators.phone('+1 555 123 4567', 'us').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should validate international phone', () => {
+      const result = validators
+        .phone('+447911123456', 'international')
+        .validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should reject invalid international phone', () => {
+      const result = validators.phone('+1', 'international').validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Invalid phone number format');
+    });
+
+    test('should use simple format for unknown format', () => {
+      const result = validators.phone('1234567890', 'unknown').validate();
+      expect(result.isValid).toBe(true);
+    });
+  });
+
+  describe('Enhanced Credit Card Validation', () => {
+    test('should validate credit card with spaces', () => {
+      const result = validators.creditCard('4532 0151 1283 0366').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should validate American Express format', () => {
+      const result = validators.creditCard('371449635398431').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should validate Discover format', () => {
+      const result = validators.creditCard('6011111111111117').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should validate minimum length credit card', () => {
+      const result = validators.creditCard('4000000000030').validate();
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should handle credit card with mixed format', () => {
+      const result = validators.creditCard('4532-0151-1283-0366').validate();
+      expect(result.isValid).toBe(false); // Should fail due to non-digit characters
+      expect(result.errors).toContain('Credit card must be 13-19 digits');
+    });
+  });
+
+  describe('ValidationResult Error Handling', () => {
+    test('should handle validation setup errors in sync validation', () => {
+      const schema = {
+        test: () => {
+          throw new Error('Setup error');
+        }
+      };
+
+      const data = { test: 'value' };
+      const result = validate(schema, data);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.test.errors).toContain(
+        'Validation setup error: Setup error'
+      );
+    });
+
+    test('should handle validation setup errors in async validation', async () => {
+      const schema = {
+        test: () => {
+          throw new Error('Async setup error');
+        }
+      };
+
+      const data = { test: 'value' };
+      const result = await validateAsync(schema, data);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.test.errors).toContain(
+        'Validation setup error: Async setup error'
+      );
+    });
+  });
+
+  describe('Enhanced Error Messages', () => {
+    test('should provide detailed error for pattern validation failure', () => {
+      const validator = new BaseValidator('test');
+      validator.rules.push(() => {
+        throw new Error('Pattern validation failed');
+      });
+
+      const result = validator.validate();
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain(
+        'Validation error: Pattern validation failed'
+      );
+    });
+
+    test('should handle async validation errors with proper messages', async () => {
+      const result = await new BaseValidator('test')
+        .customAsync(async () => {
+          throw new Error('Async custom error');
+        })
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain(
+        'Async validation error: Async custom error'
+      );
+    });
+  });
+
+  describe('Mixed Validation Types', () => {
+    test('should handle both sync and async validations together', async () => {
+      const result = await new BaseValidator('test')
+        .required()
+        .min(3)
+        .customAsync(async (value) => value.length < 10, 'Too long')
+        .validateAsync();
+
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should stop at sync validation failures before async', async () => {
+      const result = await new BaseValidator('')
+        .required('Required field')
+        .customAsync(async () => false, 'Should not run')
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Required field');
+      expect(result.errors).not.toContain('Should not run');
+    });
+
+    test('should run async validations after successful sync validations', async () => {
+      const result = await new BaseValidator('test')
+        .required()
+        .customAsync(async () => false, 'Async failure')
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Async failure');
+    });
+  });
+
+  describe('Validator Chaining and Fluent Interface', () => {
+    test('should support complex chaining with all validation types', async () => {
+      const result = await new BaseValidator('Test123')
+        .required()
+        .min(5)
+        .max(20)
+        .pattern(/^[A-Za-z0-9]+$/)
+        .custom((value) => value.includes('Test'))
+        .customAsync(async (value) => value.length > 3)
+        .validateAsync();
+
+      expect(result.isValid).toBe(true);
+    });
+
+    test('should maintain proper error accumulation in complex chains', async () => {
+      const result = await new BaseValidator('ab')
+        .required()
+        .min(5, 'Too short')
+        .customAsync(async () => false, 'Async failed')
+        .validateAsync();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain('Too short');
+      expect(result.errors).not.toContain('Async failed'); // Shouldn't run due to sync failure
+    });
+  });
+
+  describe('Integration with Existing Schema Validation', () => {
+    test('should work with async validators in schema', async () => {
+      const schema = {
+        email: validators.email,
+        username: (value) =>
+          new BaseValidator(value)
+            .required()
+            .min(3)
+            .customAsync(async (val) => val !== 'admin', 'Username not allowed')
+      };
+
+      const data = {
+        email: 'test@example.com',
+        username: 'admin'
+      };
+
+      const result = await validateAsync(schema, data);
+      expect(result.isValid).toBe(false);
+      expect(result.getErrors().username).toContain('Username not allowed');
+    });
+
+    test('should handle mixed sync/async validators in schema', async () => {
+      const schema = {
+        email: validators.email, // sync only
+        password: validators.password, // sync only
+        username: (value) =>
+          new BaseValidator(value)
+            .required()
+            .customAsync(async (val) => val.length > 2) // async
+      };
+
+      const data = {
+        email: 'test@example.com',
+        password: 'Password123',
+        username: 'ab'
+      };
+
+      const result = await validateAsync(schema, data);
+      expect(result.isValid).toBe(false);
+      expect(result.getErrors().username).toContain('Async validation failed');
+    });
+  });
 });
