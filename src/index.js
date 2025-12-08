@@ -159,6 +159,25 @@ class BaseValidator {
     return this;
   }
 
+  // Check if value equals another value
+  equals(compareValue, message) {
+    const defaultMessage = `Must equal ${compareValue}`;
+    this.rules.push(() => {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
+        return new ValidationResult(true);
+      }
+
+      if (this.value !== compareValue) {
+        return new ValidationResult(false, [this._formatError(message || defaultMessage)]);
+      }
+      return new ValidationResult(true);
+    });
+    return this;
+  }
+
   min(length, message = `Minimum length is ${length}`) {
     this.rules.push(() => {
       // Skip validation if optional and empty
