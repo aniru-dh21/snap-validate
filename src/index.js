@@ -93,6 +93,21 @@ class BaseValidator {
     this.asyncRules = [];
     this.isOptional = false;
     this.regexTimeout = 1000; // Default timeout for regex operations
+    this.fieldName = null; // Track field name for better error messages
+  }
+
+  // Set field name for contextual error messages
+  setFieldName(name) {
+    this.fieldName = name;
+    return this;
+  }
+
+  // Helper to format error messages with field context
+  _formatError(message) {
+    if (this.fieldName && !message.toLowerCase().includes(this.fieldName.toLowerCase())) {
+      return `${this.fieldName}: ${message}`;
+    }
+    return message;
   }
 
   required(message = 'This field is required') {
@@ -124,6 +139,23 @@ class BaseValidator {
 
   setRegexTimeout(timeoutMs) {
     this.regexTimeout = timeoutMs;
+    return this;
+  }
+
+  // Transform/sanitize data before validation
+  transform(fn, errorMessage = 'Transform function failed') {
+    this.rules.push(() => {
+      if (this.value != null && this.value !== '') {
+        try {
+          this.value = fn(this.value);
+        } catch (error) {
+          return new ValidationResult(false, [
+            this._formatError(`${errorMessage}: ${error.message}`)
+          ]);
+        }
+      }
+      return new ValidationResult(true);
+    });
     return this;
   }
 
