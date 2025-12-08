@@ -1,6 +1,6 @@
 /**
  * Snap Validate - Enhanced Lightweight validator library
- * @version 0.3.3 - Typescript Patch
+ * @version 0.4.0 - Phase 1: Arrays, Nested Objects, Transforms
  */
 
 // Utility function to safely test regex with timeout protection
