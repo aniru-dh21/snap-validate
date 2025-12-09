@@ -323,6 +323,49 @@ class BaseValidator {
     return this;
   }
 
+  // Async array validation
+  arrayOfAsync(validator, message = 'Invalid array items') {
+    this.asyncRules.push(async () => {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined)
+      ) {
+        return new ValidationResult(true);
+      }
+
+      if (!Array.isArray(this.value)) {
+        return new ValidationResult(false, [this._formatError('Value must be an array')]);
+      }
+
+      const errors = [];
+      for (let index = 0; index < this.value.length; index++) {
+        try {
+          const item = this.value[index];
+          const itemValidator = typeof validator === 'function' ? validator(item) : validator;
+
+          const result = itemValidator.asyncRules && itemValidator.asyncRules.length > 0
+            ? await itemValidator.validateAsync()
+            : itemValidator.validate();
+
+          if (!result.isValid) {
+            errors.push(`[${index}]: ${result.errors.join(', ')}`);
+          }
+        } catch (error) {
+          errors.push(`[${index}]: Validation error - ${error.message}`);
+        }
+      }
+
+      if (errors.length > 0) {
+        return new ValidationResult(false, [
+          this._formatError(`${message}: ${errors.join('; ')}`)
+        ]);
+      }
+
+      return new ValidationResult(true);
+    });
+    return this;
+  }
+
   pattern(regex, message = 'Invalid format') {
     // SECURITY FIX: Add regex safety check
     if (!isRegexSafe(regex)) {
