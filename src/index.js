@@ -197,6 +197,27 @@ class BaseValidator {
     return this;
   }
 
+  // Check if value is between min and max (for numbers)
+  between(min, max, message) {
+    const defaultMessage = `Must be between ${min} and ${max}`;
+    this.rules.push(() => {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined || this.value === '')
+      ) {
+        return new ValidationResult(true);
+      }
+
+      const numValue = typeof this.value === 'number' ? this.value : parseFloat(this.value);
+
+      if (isNaN(numValue) || numValue < min || numValue > max) {
+        return new ValidationResult(false, [this._formatError(message || defaultMessage)]);
+      }
+      return new ValidationResult(true);
+    });
+    return this;
+  }
+
   min(length, message = `Minimum length is ${length}`) {
     this.rules.push(() => {
       // Skip validation if optional and empty
