@@ -91,7 +91,10 @@ class BaseValidator {
 
   // Helper to format error messages with field context
   _formatError(message) {
-    if (this.fieldName && !message.toLowerCase().includes(this.fieldName.toLowerCase())) {
+    if (
+      this.fieldName &&
+      !message.toLowerCase().includes(this.fieldName.toLowerCase())
+    ) {
       return `${this.fieldName}: ${message}`;
     }
     return message;
@@ -157,7 +160,9 @@ class BaseValidator {
       }
 
       if (this.value !== compareValue) {
-        return new ValidationResult(false, [this._formatError(message || defaultMessage)]);
+        return new ValidationResult(false, [
+          this._formatError(message || defaultMessage)
+        ]);
       }
       return new ValidationResult(true);
     });
@@ -176,7 +181,9 @@ class BaseValidator {
       }
 
       if (!allowedValues.includes(this.value)) {
-        return new ValidationResult(false, [this._formatError(message || defaultMessage)]);
+        return new ValidationResult(false, [
+          this._formatError(message || defaultMessage)
+        ]);
       }
       return new ValidationResult(true);
     });
@@ -194,10 +201,13 @@ class BaseValidator {
         return new ValidationResult(true);
       }
 
-      const numValue = typeof this.value === 'number' ? this.value : parseFloat(this.value);
+      const numValue =
+        typeof this.value === 'number' ? this.value : parseFloat(this.value);
 
       if (isNaN(numValue) || numValue < min || numValue > max) {
-        return new ValidationResult(false, [this._formatError(message || defaultMessage)]);
+        return new ValidationResult(false, [
+          this._formatError(message || defaultMessage)
+        ]);
       }
       return new ValidationResult(true);
     });
@@ -291,13 +301,16 @@ class BaseValidator {
       }
 
       if (!Array.isArray(this.value)) {
-        return new ValidationResult(false, [this._formatError('Value must be an array')]);
+        return new ValidationResult(false, [
+          this._formatError('Value must be an array')
+        ]);
       }
 
       const errors = [];
       this.value.forEach((item, index) => {
         try {
-          const itemValidator = typeof validator === 'function' ? validator(item) : validator;
+          const itemValidator =
+            typeof validator === 'function' ? validator(item) : validator;
           const result = itemValidator.validate();
 
           if (!result.isValid) {
@@ -330,18 +343,22 @@ class BaseValidator {
       }
 
       if (!Array.isArray(this.value)) {
-        return new ValidationResult(false, [this._formatError('Value must be an array')]);
+        return new ValidationResult(false, [
+          this._formatError('Value must be an array')
+        ]);
       }
 
       const errors = [];
       for (let index = 0; index < this.value.length; index++) {
         try {
           const item = this.value[index];
-          const itemValidator = typeof validator === 'function' ? validator(item) : validator;
+          const itemValidator =
+            typeof validator === 'function' ? validator(item) : validator;
 
-          const result = itemValidator.asyncRules && itemValidator.asyncRules.length > 0
-            ? await itemValidator.validateAsync()
-            : itemValidator.validate();
+          const result =
+            itemValidator.asyncRules && itemValidator.asyncRules.length > 0
+              ? await itemValidator.validateAsync()
+              : itemValidator.validate();
 
           if (!result.isValid) {
             errors.push(`[${index}]: ${result.errors.join(', ')}`);
@@ -372,7 +389,11 @@ class BaseValidator {
         return new ValidationResult(true);
       }
 
-      if (typeof this.value !== 'object' || this.value === null || Array.isArray(this.value)) {
+      if (
+        typeof this.value !== 'object' ||
+        this.value === null ||
+        Array.isArray(this.value)
+      ) {
         return new ValidationResult(false, [this._formatError(message)]);
       }
 
@@ -410,7 +431,11 @@ class BaseValidator {
         return new ValidationResult(true);
       }
 
-      if (typeof this.value !== 'object' || this.value === null || Array.isArray(this.value)) {
+      if (
+        typeof this.value !== 'object' ||
+        this.value === null ||
+        Array.isArray(this.value)
+      ) {
         return new ValidationResult(false, [this._formatError(message)]);
       }
 
@@ -466,7 +491,9 @@ class BaseValidator {
               this._formatError('Input too long for pattern validation')
             ]);
           }
-          return new ValidationResult(false, [this._formatError('Pattern validation failed')]);
+          return new ValidationResult(false, [
+            this._formatError('Pattern validation failed')
+          ]);
         }
       }
       return new ValidationResult(true);
@@ -510,10 +537,14 @@ class BaseValidator {
         } catch (error) {
           if (error.message.includes('timeout')) {
             return new ValidationResult(false, [
-              this._formatError('Pattern validation timeout - pattern too complex')
+              this._formatError(
+                'Pattern validation timeout - pattern too complex'
+              )
             ]);
           }
-          return new ValidationResult(false, [this._formatError('Pattern validation failed')]);
+          return new ValidationResult(false, [
+            this._formatError('Pattern validation failed')
+          ]);
         }
       }
       return new ValidationResult(true);
@@ -624,7 +655,9 @@ class BaseValidator {
         }
       } catch (error) {
         result.isValid = false;
-        result.errors.push(this._formatError(`Validation error: ${error.message}`));
+        result.errors.push(
+          this._formatError(`Validation error: ${error.message}`)
+        );
       }
     }
 
@@ -649,7 +682,9 @@ class BaseValidator {
         }
       } catch (error) {
         result.isValid = false;
-        result.errors.push(this._formatError(`Async validation error: ${error.message}`));
+        result.errors.push(
+          this._formatError(`Async validation error: ${error.message}`)
+        );
       }
     }
 
@@ -662,7 +697,7 @@ const validators = {
   email: (value) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return new BaseValidator(value)
-      .transform(v => typeof v === 'string' ? v.trim().toLowerCase() : v)
+      .transform((v) => (typeof v === 'string' ? v.trim().toLowerCase() : v))
       .required('Email is required')
       .pattern(emailRegex, 'Invalid email format');
   },
@@ -828,9 +863,8 @@ const validate = (schema, data) => {
   for (const [field, validator] of Object.entries(schema)) {
     try {
       const fieldValue = data[field];
-      const validatorInstance = typeof validator === 'function'
-        ? validator(fieldValue)
-        : validator;
+      const validatorInstance =
+        typeof validator === 'function' ? validator(fieldValue) : validator;
 
       // Set field name for better error context
       validatorInstance.setFieldName(field);
@@ -881,16 +915,16 @@ const validateAsync = async (schema, data) => {
     try {
       const fieldValue = data[field];
 
-      const validatorInstance = typeof validator === 'function'
-        ? validator(fieldValue)
-        : validator;
+      const validatorInstance =
+        typeof validator === 'function' ? validator(fieldValue) : validator;
 
       // Set field name for better error context
       validatorInstance.setFieldName(field);
 
-      const result = validatorInstance.asyncRules && validatorInstance.asyncRules.length > 0
-        ? await validatorInstance.validateAsync()
-        : validatorInstance.validate();
+      const result =
+        validatorInstance.asyncRules && validatorInstance.asyncRules.length > 0
+          ? await validatorInstance.validateAsync()
+          : validatorInstance.validate();
 
       results[field] = result;
       if (!result.isValid) {
