@@ -284,6 +284,45 @@ class BaseValidator {
     return this;
   }
 
+  // Validate each item in an array
+  arrayOf(validator, message = 'Invalid array items') {
+    this.rules.push(() => {
+      if (
+        this.isOptional &&
+        (this.value === null || this.value === undefined)
+      ) {
+        return new ValidationResult(true);
+      }
+
+      if (!Array.isArray(this.value)) {
+        return new ValidationResult(false, [this._formatError('Value must be an array')]);
+      }
+
+      const errors = [];
+      this.value.forEach((item, index) => {
+        try {
+          const itemValidator = typeof validator === 'function' ? validator(item) : validator;
+          const result = itemValidator.validate();
+
+          if (!result.isValid) {
+            errors.push(`[${index}]: ${result.errors.join(', ')}`);
+          }
+        } catch (error) {
+          errors.push(`[${index}]: Validation error - ${error.message}`);
+        }
+      });
+
+      if (errors.length > 0) {
+        return new ValidationResult(false, [
+          this._formatError(`${message}: ${errors.join('; ')}`)
+        ]);
+      }
+
+      return new ValidationResult(true);
+    });
+    return this;
+  }
+
   pattern(regex, message = 'Invalid format') {
     // SECURITY FIX: Add regex safety check
     if (!isRegexSafe(regex)) {
