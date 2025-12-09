@@ -619,7 +619,7 @@ describe('Snap Validate Tests', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.errors.test.errors).toContain(
-        'Validation setup error: Validator setup error'
+        'test: Validation setup error - Validator setup error'
       );
     });
 
@@ -998,7 +998,9 @@ describe('Snap Validate Tests', () => {
       const result = await validateAsync(schema, data);
       expect(result.isValid).toBe(false);
       expect(result.getErrors().email).toContain('Invalid email format');
-      expect(result.getErrors().username).toContain('Minimum length is 3');
+      expect(result.getErrors().username).toContain(
+        'username: Minimum length is 3'
+      );
     });
 
     test('should throw error for invalid schema in async validation', async () => {
@@ -1302,7 +1304,7 @@ describe('Snap Validate Tests', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.errors.test.errors).toContain(
-        'Validation setup error: Setup error'
+        'test: Validation setup error - Setup error'
       );
     });
 
@@ -1318,7 +1320,7 @@ describe('Snap Validate Tests', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.errors.test.errors).toContain(
-        'Validation setup error: Async setup error'
+        'test: Validation setup error - Async setup error'
       );
     });
   });
@@ -1450,7 +1452,9 @@ describe('Snap Validate Tests', () => {
 
       const result = await validateAsync(schema, data);
       expect(result.isValid).toBe(false);
-      expect(result.getErrors().username).toContain('Async validation failed');
+      expect(result.getErrors().username).toContain(
+        'username: Async validation failed'
+      );
     });
   });
 });
