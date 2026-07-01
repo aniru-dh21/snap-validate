@@ -446,7 +446,7 @@ class BaseValidator {
           if (!result) {
             return new ValidationResult(false, [this._formatError(message)]);
           }
-        } catch (error) {
+        } catch {
           return new ValidationResult(false, [
             this._formatError('Pattern validation failed')
           ]);
