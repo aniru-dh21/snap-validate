@@ -31,7 +31,8 @@ declare module 'snap-validate' {
   export type CountryCode = 'us' | 'ca' | 'uk';
 
   /**
-   * Custom validation function that returns boolean
+   * Custom validation function that returns boolean, an error string, or a
+   * ValidationResult
    */
   export type CustomValidatorFunction = (
     value: any
@@ -43,6 +44,11 @@ declare module 'snap-validate' {
   export type AsyncValidatorFunction = (
     value: any
   ) => Promise<boolean | string | ValidationResult>;
+
+  /**
+   * Value transform/sanitize function used by transform()
+   */
+  export type TransformFunction = (value: any) => any;
 
   /**
    * Conditional validation condition
@@ -63,7 +69,16 @@ declare module 'snap-validate' {
     rules: Array<() => ValidationResult>;
     asyncRules: Array<() => Promise<ValidationResult>>;
     isOptional: boolean;
+    /**
+     * @deprecated No-op. A timer cannot interrupt a synchronous regex on a
+     * single thread, so this value is ignored. Retained for compatibility.
+     */
     regexTimeout: number;
+
+    /**
+     * Set the field name used to prefix contextual error messages
+     */
+    setFieldName(name: string): BaseValidator;
 
     /**
      * Make field required
@@ -76,19 +91,72 @@ declare module 'snap-validate' {
     optional(): BaseValidator;
 
     /**
-     * Set timeout for regex operations in milliseconds
+     * @deprecated No-op, retained for backward compatibility and chainability.
+     * Regex execution cannot be interrupted by a timeout on a single thread, so
+     * this setting is ignored.
      */
     setRegexTimeout(timeoutMs: number): BaseValidator;
 
     /**
-     * Set minimum length/value
+     * Transform/sanitize the value before subsequent rules run
+     */
+    transform(fn: TransformFunction, errorMessage?: string): BaseValidator;
+
+    /**
+     * Require the value to strictly equal compareValue
+     */
+    equals(compareValue: any, message?: string): BaseValidator;
+
+    /**
+     * Require the value to be one of the allowed values
+     */
+    oneOf(allowedValues: any[], message?: string): BaseValidator;
+
+    /**
+     * Require a numeric value between min and max (inclusive)
+     */
+    between(min: number, max: number, message?: string): BaseValidator;
+
+    /**
+     * Set minimum length (string/array) or minimum value (number)
      */
     min(length: number, message?: string): BaseValidator;
 
     /**
-     * Set maximum length/value
+     * Set maximum length (string/array) or maximum value (number)
      */
     max(length: number, message?: string): BaseValidator;
+
+    /**
+     * Require the value to be an array
+     */
+    array(message?: string): BaseValidator;
+
+    /**
+     * Validate each item of an array (synchronous)
+     */
+    arrayOf(
+      validator: BaseValidator | ValidationFunction,
+      message?: string
+    ): BaseValidator;
+
+    /**
+     * Validate each item of an array (asynchronous)
+     */
+    arrayOfAsync(
+      validator: BaseValidator | ValidationFunction,
+      message?: string
+    ): BaseValidator;
+
+    /**
+     * Validate a nested object against a schema (synchronous)
+     */
+    object(schema: Schema, message?: string): BaseValidator;
+
+    /**
+     * Validate a nested object against a schema (asynchronous)
+     */
+    objectAsync(schema: Schema, message?: string): BaseValidator;
 
     /**
      * Validate against regex pattern (synchronous)
@@ -96,7 +164,9 @@ declare module 'snap-validate' {
     pattern(regex: RegExp, message?: string): BaseValidator;
 
     /**
-     * Validate against regex pattern with timeout protection (asynchronous)
+     * Validate against a regex pattern (asynchronous). Input-length and
+     * static-safety guards apply; there is no runtime timeout interruption
+     * (impossible for synchronous regex execution).
      */
     patternAsync(regex: RegExp, message?: string): BaseValidator;
 
@@ -190,7 +260,13 @@ declare module 'snap-validate' {
   ): Promise<SchemaValidationResult>;
 
   /**
-   * Safely test regex with timeout protection (asynchronous)
+   * Safely test a regex asynchronously. Applies an input-length cap and the
+   * isRegexSafe static heuristic, then runs the match. Returns a Promise.
+   *
+   * Note: there is NO runtime timeout interruption - a timer cannot stop a
+   * synchronous regex on a single thread.
+   *
+   * @param timeoutMs @deprecated Ignored; retained for backward compatibility.
    */
   export function safeRegexTest(
     regex: RegExp,
@@ -208,7 +284,9 @@ declare module 'snap-validate' {
   ): boolean;
 
   /**
-   * Check if a regex pattern is safe to use (ReDoS protection)
+   * Best-effort STATIC heuristic that flags a few common catastrophic-
+   * backtracking regex shapes. Not a guarantee: it can miss dangerous patterns
+   * and occasionally over-reject safe ones.
    */
   export function isRegexSafe(regex: RegExp): boolean;
 }

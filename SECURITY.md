@@ -6,33 +6,34 @@ We take security seriously and provide security updates for the following versio
 
 | Version | Supported          | Status |
 | ------- | ------------------ | ------ |
-| 0.3.x   | ✅ Yes             | Current stable release with full security support |
-| 0.2.x   | ⚠️ Security fixes only | Critical security patches only |
-| < 0.2.0 | ❌ No             | End of life - immediate upgrade recommended |
+| 0.4.x   | ✅ Yes             | Current stable release with full security support |
+| 0.3.x   | ⚠️ Security fixes only | Critical security patches only |
+| < 0.3.0 | ❌ No             | End of life - immediate upgrade recommended |
 
 ### Security Support Timeline
 
-- **Current version (0.3.x)**: Full support with security fixes, new features, and bug fixes
-- **Previous version (0.2.x)**: Security fixes and critical bug fixes only
-- **Older versions (< 0.2.0)**: No longer supported - immediate upgrade recommended
+- **Current version (0.4.x)**: Full support with security fixes, new features, and bug fixes
+- **Previous version (0.3.x)**: Security fixes and critical bug fixes only
+- **Older versions (< 0.3.0)**: No longer supported - immediate upgrade recommended
 
 ## Security Features
 
 ### ReDoS (Regular Expression Denial of Service) Protection
 
-Snap Validate includes comprehensive protection against ReDoS attacks:
+Snap Validate includes protection against ReDoS attacks:
 
 #### Built-in Safety Measures
-- **Regex Safety Detection**: Automatically detects potentially dangerous regex patterns
-- **Input Length Protection**: 10,000 character limit to prevent ReDoS attacks
-- **Timeout Protection**: Configurable timeout for regex operations (default: 1 second)
+- **Regex Safety Detection**: `isRegexSafe` applies a best-effort static heuristic that flags a few common catastrophic-backtracking shapes before a pattern runs
+- **Input Length Protection**: 10,000 character limit to bound the work any single match can do
 - **Safe Defaults**: All predefined validators use optimized, safe regex patterns
 
+> **Important — no runtime timeout.** Earlier releases advertised a configurable regex "timeout." Because JavaScript executes regexes synchronously on a single thread, a timer cannot interrupt a regex that is mid-backtrack — the event loop stays blocked until the match completes. That mechanism never provided real protection, so it has been removed and its API (`setRegexTimeout`, the `timeoutMs` argument) deprecated as a no-op. The effective, real protections are the input-length cap and the `isRegexSafe` static check. `isRegexSafe` is a heuristic, not a guarantee: it can miss dangerous patterns and can occasionally over-reject safe ones. For guaranteed linear-time matching of untrusted patterns, use a non-backtracking engine such as the native `re2` module or run matching in a worker/subprocess with a real timeout.
+
 #### Security Functions
-- `isRegexSafe(regex)` - Check if a regex pattern is safe to use
-- `safeRegexText(regex, str, timeoutMs)` - Execute regex with timeout protection
-- `patternAsync(regex, message)` - Async pattern validation with timeout protection
-- `setRegexTimeout(timeoutMs)` - Configure custom timeout for regex operations
+- `isRegexSafe(regex)` - Best-effort static check for dangerous regex shapes
+- `safeRegexTest(regex, str)` - Async regex test applying the input-length and safety guards (a legacy `timeoutMs` third argument is accepted but ignored)
+- `safeRegexTestSync(regex, str, maxLength?)` - Synchronous regex test with input-length protection
+- `patternAsync(regex, message)` - Async pattern validation using the same guards
 
 ### Secure Validator Implementation
 
@@ -84,7 +85,7 @@ When reporting a security vulnerability, please include:
 3. **Use Built-in Validators**: Prefer predefined validators over custom regex
 4. **Test Custom Patterns**: Use `isRegexSafe()` for custom regex patterns
 5. **Handle Async Errors**: Always use try-catch blocks with async validation
-6. **Set Appropriate Timeouts**: Configure regex timeouts based on your needs
+6. **Harden Untrusted Patterns**: For user-supplied regex needing guaranteed linear-time matching, pair the library with a non-backtracking engine such as `re2`
 
 ### For Developers
 
@@ -121,7 +122,6 @@ When reporting a security vulnerability, please include:
 
 ### Async Validation Security
 
-- **Timeout Handling**: Ensure proper timeout configuration for async operations
 - **Error Handling**: Prevent information leakage through error messages
 - **Resource Management**: Proper cleanup of async resources
 - **Rate Limiting**: Consider rate limiting for external API calls in custom validators
@@ -195,4 +195,4 @@ When reporting a security vulnerability, please include:
 
 ---
 
-This security policy is regularly reviewed and updated. Last updated: July 2025
+This security policy is regularly reviewed and updated. Last updated: July 2026

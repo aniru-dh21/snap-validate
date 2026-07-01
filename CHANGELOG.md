@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-07-01
+
+### 🔒 Security
+
+#### Honest ReDoS protection
+- **Removed ineffective regex timeout** - The previous "timeout protection" for regex could never work: JavaScript runs regexes synchronously on a single thread, so a timer cannot interrupt a pattern that is mid-backtrack. The fake timeout has been removed from `safeRegexTest`, and the documented protections now reflect reality: an input-length cap (10,000 characters) and the `isRegexSafe` static heuristic.
+- **Deprecated timeout API (non-breaking)** - `setRegexTimeout()` and the `regexTimeout` field are retained for backward compatibility but are now documented no-ops. `safeRegexTest`'s third `timeoutMs` argument is still accepted but ignored. These are slated for removal in a future major version.
+- **Clarified `isRegexSafe`** - Documented as a best-effort static heuristic that can miss dangerous patterns and occasionally over-reject safe ones — not a guarantee. For guaranteed linear-time matching, use a non-backtracking engine such as the native `re2` module.
+
+#### Dependency security
+- **Resolved all known advisories** - Cleared 29 `npm audit` findings (2 critical, 2 high, 25 moderate) down to zero, primarily by upgrading the Jest toolchain and pinning a patched `js-yaml` via an `overrides` entry.
+
+### Changed
+
+- **Modular source layout** - The single `src/index.js` was split into focused modules (`core/`, `utils/`, `validators/`, `schema/`) behind an unchanged public API. `require('snap-validate')` and all existing imports continue to work identically.
+- **Consistent credit-card errors** - `creditCard` now routes through the shared `custom()` path, so within a schema its errors carry the field-name prefix like every other validator (e.g. `cardNumber: Credit card must be 13-19 digits`). Standalone usage is unchanged.
+
+### Added
+
+- **Expanded TypeScript definitions** - Added the previously-undeclared methods to the type definitions: `setFieldName`, `transform`, `equals`, `oneOf`, `between`, `array`, `arrayOf`, `arrayOfAsync`, `object`, and `objectAsync`, plus a `TransformFunction` type. Deprecated `setRegexTimeout` / `regexTimeout` / `safeRegexTest(timeoutMs)` are marked `@deprecated`.
+
+### Fixed
+
+- **Documentation accuracy** - Corrected the `safeRegexText` typo to `safeRegexTest`, replaced `validate.async(...)` references with the real `validateAsync(...)` export, and fixed examples that called `.email()` as if it were a `BaseValidator` method.
+- **Dead code** - Removed an unused `catch` binding in `patternAsync` (surfaced by the stricter `no-unused-vars` in ESLint 10).
+
+### Development
+
+- **Jest 30** - Upgraded the test toolchain from Jest 24/25 to Jest 30.
+- **ESLint 10 + flat config** - Migrated from ESLint 8 (`.eslintrc.js`) to ESLint 10 (`eslint.config.js`). Contributor tooling now requires Node.js >= 20.19; the published library still supports Node >= 18.
+- **Removed `ts-jest`** - It was installed but never wired into the Jest config; TypeScript is checked via standalone `tsc`.
+- **husky v9** - Updated the `prepare` script to `husky` and added a `pre-commit` hook running `lint-staged`.
+- **CI** - Test matrix updated to Node `[18, 20, 22, 24]`; linting moved to its own job on Node 22.
+- **Engines** - `engines.node` raised from `>=12.0.0` to `>=18.0.0` to match what the toolchain can test.
+
 ## [0.3.3] - 2025-07-13
 
 ### 🔧 TypeScript Support
@@ -331,13 +366,12 @@ This project follows [Semantic Versioning](https://semver.org/):
 - **PATCH** version for backwards-compatible bug fixes
 
 ### Security Policy
-- **Current version** (0.3.3): Full support with security fixes, new features, and bug fixes
-- **Previous version** (0.3.1): Security fixes and critical bug fixes only
-- **Older versions** (0.3.0 and below): Limited support, upgrade recommended for latest features
+- **Current version** (0.4.x): Full support with security fixes, new features, and bug fixes
+- **Older versions** (0.3.x and below): Limited support, upgrade recommended for latest features and fixes
 
 ### Security Alerts
-- **v0.3.1**: Fixes critical ReDoS vulnerability (CVE-pending)
-- **Recommendation**: Upgrade immediately from versions < 0.3.1
+- **v0.4.3**: Removed the ineffective regex "timeout" protection and documented the real guards (input-length cap + `isRegexSafe` static heuristic); cleared all known dependency advisories
+- **v0.3.1**: Added initial ReDoS mitigations (`isRegexSafe`, input-length cap)
 
 ### Migration Guides
 For major version upgrades, see our [Migration Guide](MIGRATION.md) for detailed instructions on updating your code.

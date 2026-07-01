@@ -1,6 +1,6 @@
 {
   "name": "snap-validate",
-  "version": "0.4.0",
+  "version": "0.4.3",
   "description": "Lightweight validation library for common patterns without heavy dependencies",
   "main": "src/index.js",
   "types": "types/index.d.ts",
@@ -19,7 +19,7 @@
     "lint": "eslint src tests",
     "lint:fix": "eslint src tests --fix",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
-    "prepare": "husky install",
+    "prepare": "husky",
     "prepublishOnly": "npm test && npm run lint",
     "build": "echo 'No build step required for this library'",
     "example": "node examples/basic-usage.js",
@@ -56,13 +56,19 @@
     "url": "https://github.com/aniru-dh21/snap-validate/issues"
   },
   "homepage": "https://github.com/aniru-dh21/snap-validate#readme",
+  "overrides": {
+    "js-yaml": "4.2.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
-    "babel-jest": "^29.7.0",
-    "eslint": "^8.57.1",
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "babel-jest": "^30.4.1",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
     "husky": "^9.1.0",
-    "jest": "^29.7.0",
+    "jest": "^30.4.2",
     "lint-staged": "^15.2.0",
     "prettier": "^3.2.0"
   },
@@ -73,7 +79,7 @@
     "LICENSE"
   ],
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=18.0.0"
   },
   "jest": {
     "testEnvironment": "node",

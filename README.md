@@ -21,7 +21,7 @@ A lightning-fast, lightweight validation library for common patterns without hea
 - 🎯 **Conditional**: Advanced conditional validation with `when()` and `optional()`  
 - 🛠️ **Custom Validators**: Add your own sync and async validation logic  
 - 🔒 **Security First**: Built-in protection against ReDoS attacks and unsafe regex patterns  
-- 🛡️ **Timeout Protection**: Configurable timeout for regex operations to prevent DoS attacks  
+- 🛡️ **Input Guards**: Input-length limits and static detection of dangerous regex shapes  
 - 🧪 **Well Tested**: Comprehensive test suite with high coverage  
 - 📦 **Easy Integration**: Works in Node.js and browsers  
 - 🔗 **Chainable API**: Intuitive fluent interface  
@@ -32,6 +32,8 @@ A lightning-fast, lightweight validation library for common patterns without hea
 ```bash
 npm install snap-validate
 ```
+
+Runtime: Node.js **>= 18** (the published library has zero dependencies and also runs in browsers via a bundler — see [Browser Usage](#browser-usage)).
 
 ### TypeScript
 
@@ -120,22 +122,26 @@ Features:
 
 Snap Validate includes built-in protection against Regular Expression Denial of Service (ReDoS) attacks:
 
-- **Regex Safety Detection**: Automatically detects and prevents potentially dangerous regex patterns
+- **Regex Safety Detection**: Best-effort static heuristic (`isRegexSafe`) that flags a few common catastrophic-backtracking shapes before a pattern is used
 - **Input Length Limits**: Protects against extremely long input strings (10,000 character limit)
-- **Timeout Protection**: Configurable timeout for regex operations (default: 1 second)
 - **Safe Defaults**: All predefined validators use safe, optimized regex patterns
 
+> **A note on timeouts:** earlier versions advertised a configurable regex "timeout." JavaScript runs regexes synchronously on a single thread, so a timer cannot interrupt a regex that is mid-backtrack — the event loop is blocked until it finishes. The timeout therefore never provided real protection and has been deprecated (see the CHANGELOG). The effective guards are the input-length cap and the `isRegexSafe` static check. For guaranteed linear-time matching, use a non-backtracking engine such as the native `re2` module.
+
 ```javascript
-// Set custom timeout for regex operations
-const validator = new BaseValidator(value)
-  .setRegexTimeout(2000) // 2 second timeout
-  .pattern(/your-pattern/, 'Error message');
+const { BaseValidator, isRegexSafe } = require('snap-validate');
 
-// Use async pattern validation for complex patterns with timeout protection
-const validator = new BaseValidator(value)
-  .patternAsync(/complex-pattern/, 'Error message');
+// Check a custom pattern before using it
+if (isRegexSafe(/^[a-zA-Z0-9]+$/)) {
+  const validator = new BaseValidator(value)
+    .pattern(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed');
+}
 
-const result = await validator.validateAsync();
+// Async pattern validation (applies the same length + safety guards)
+const asyncValidator = new BaseValidator(value)
+  .patternAsync(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed');
+
+const result = await asyncValidator.validateAsync();
 ```
 
 ## Available Validators
@@ -229,7 +235,7 @@ const validator = new BaseValidator(value)
 // Optional validation - skip if empty/null/undefined
 const optionalValidator = new BaseValidator(value)
   .optional()
-  .email('Must be a valid email if provided');
+  .pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Must be a valid email if provided');
 
 // Function-based conditions
 const conditionalValidator = new BaseValidator(value)
@@ -240,7 +246,7 @@ const conditionalValidator = new BaseValidator(value)
 ### Custom Validators
 
 ```javascript
-const { BaseValidator } = require('snap-validate');
+const { BaseValidator, validators } = require('snap-validate');
 
 // Synchronous custom validation
 const customValidator = new BaseValidator(value)
@@ -252,9 +258,8 @@ const customValidator = new BaseValidator(value)
     return true;
   });
 
-// Asynchronous custom validation
-const asyncValidator = new BaseValidator(email)
-  .email()
+// Asynchronous custom validation (validators.email returns a BaseValidator you can chain)
+const asyncValidator = validators.email(email)
   .customAsync(async (email) => {
     const exists = await checkEmailExists(email);
     return !exists || 'Email already exists';
@@ -267,6 +272,8 @@ const result = await asyncValidator.validateAsync();
 ### Async Validation
 
 ```javascript
+const { BaseValidator, validators, validateAsync } = require('snap-validate');
+
 // Async validation for single field
 const validator = new BaseValidator(username)
   .required()
@@ -294,7 +301,7 @@ const asyncSchema = {
     })
 };
 
-const asyncResult = await validate.async(asyncSchema, userData);
+const asyncResult = await validateAsync(asyncSchema, userData);
 ```
 
 ## Security and Pattern Validation
@@ -308,26 +315,27 @@ const { BaseValidator } = require('snap-validate');
 const validator = new BaseValidator(value)
   .pattern(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed');
 
-// Asynchronous pattern validation with timeout protection
+// Asynchronous pattern validation (same length + static-safety guards)
 const asyncValidator = new BaseValidator(value)
-  .patternAsync(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed')
-  .setRegexTimeout(5000); // 5 second timeout
+  .patternAsync(/^[a-zA-Z0-9]+$/, 'Only alphanumeric characters allowed');
 
 const result = await asyncValidator.validateAsync();
 ```
 
-### Configurable Security Settings
+### How the safety guards work
 
 ```javascript
 const validator = new BaseValidator(value)
-  .setRegexTimeout(3000) // Set custom timeout (3 seconds)
   .pattern(/your-pattern/, 'Error message');
 
-// The library automatically:
-// - Detects unsafe regex patterns
-// - Limits input length to prevent ReDoS
-// - Applies timeout protection for complex patterns
+// For every pattern, the library automatically:
+// - Runs a best-effort static check (isRegexSafe) that rejects a few common
+//   catastrophic-backtracking shapes (throws on a flagged pattern)
+// - Limits input length to 10,000 characters to bound matching work
 // - Provides clear error messages for security violations
+//
+// Note: there is no runtime timeout - a timer cannot interrupt a synchronous
+// regex on a single thread. See the Security Features section above.
 ```
 
 ## Custom Validation
@@ -411,15 +419,16 @@ if (!unsafeResult.isValid) {
 
 ## Browser Usage
 
-```html
-<script src="https://unpkg.com/snap-validate/src/index.js"></script>
-<script>
-  const { validators } = SnapValidate;
-  
-  const result = validators.email('user@example.com').validate();
-  console.log(result.isValid);
-</script>
+Snap Validate ships as CommonJS modules (`require`/`module.exports`). In the browser, use it through a bundler that understands CommonJS — such as [Vite](https://vitejs.dev/), [webpack](https://webpack.js.org/), [esbuild](https://esbuild.github.io/), or [Rollup](https://rollupjs.org/):
+
+```javascript
+import { validators } from 'snap-validate';
+
+const result = validators.email('user@example.com').validate();
+console.log(result.isValid);
 ```
+
+> A raw `<script src=".../src/index.js">` tag will not work directly, because the source uses `require()` to load its internal modules. Bundle it (or wrap it in your own UMD/ESM build) for direct browser use.
 
 ## API Reference
 
@@ -431,17 +440,27 @@ if (!unsafeResult.isValid) {
 ### BaseValidator Methods
 
 - `required(message?)` - Field is required
-- `min(length, message?)` - Minimum length validation
-- `max(length, message?)` - Maximum length validation
-- `pattern(regex, message?)` - Pattern matching validation with safety checks
-- `patternAsync(regex, message?)` - Async pattern validation with timeout protection
-- `setRegexTimeout(timeoutMs)` - Set custom timeout for regex operations
-- `when(condition, validator)` - Conditional validation
 - `optional()` - Skip validation if empty/null/undefined
+- `setFieldName(name)` - Set the field name used to prefix error messages
+- `transform(fn, errorMessage?)` - Transform/sanitize the value before later rules run
+- `equals(compareValue, message?)` - Require strict equality with a value
+- `oneOf(allowedValues, message?)` - Require the value to be one of a set
+- `between(min, max, message?)` - Require a number within an inclusive range
+- `min(length, message?)` - Minimum length (string/array) or value (number)
+- `max(length, message?)` - Maximum length (string/array) or value (number)
+- `array(message?)` - Require the value to be an array
+- `arrayOf(validator, message?)` - Validate each item of an array
+- `arrayOfAsync(validator, message?)` - Validate each item of an array (async)
+- `object(schema, message?)` - Validate a nested object against a schema
+- `objectAsync(schema, message?)` - Validate a nested object against a schema (async)
+- `pattern(regex, message?)` - Pattern matching validation with safety checks
+- `patternAsync(regex, message?)` - Async pattern validation (length + static-safety guards)
+- `when(condition, validator)` - Conditional validation
 - `custom(fn, message?)` - Custom synchronous validation
 - `customAsync(fn, message?)` - Custom asynchronous validation
 - `validate()` - Execute synchronous validation
 - `validateAsync()` - Execute asynchronous validation
+- `setRegexTimeout(timeoutMs)` - **Deprecated (no-op).** Kept for compatibility; a timer cannot interrupt a synchronous regex, so the value is ignored
 
 ### Available Validators
 
@@ -456,29 +475,33 @@ if (!unsafeResult.isValid) {
 
 ### TypeScript Types
 
-- `ValidationResult` - Interface for validation results  
-- `ValidatorFunction` - Type for validator functions used in schemas  
-- `ValidationSchema` - Type for validation schema objects  
-- `PasswordOptions` - Interface for password validation configuration  
-- `BaseValidator<T>` - Generic base validator class
+- `ValidationResult` - Class for validation results (`isValid`, `errors`)
+- `SchemaValidationResult` - Result of `validate` / `validateAsync` (`isValid`, `errors`, `getErrors()`)
+- `ValidationFunction` - Type for validator functions used in schemas
+- `Schema` - Type for validation schema objects
+- `PasswordOptions` - Interface for password validation configuration
+- `PhoneFormat` / `CountryCode` - String-literal unions for `phone` / `zipCode` options
+- `CustomValidatorFunction` / `AsyncValidatorFunction` / `TransformFunction` - Callback types
+- `BaseValidator` - The chainable validator class
 
 ### Validation Functions
 
 - `validate(schema, data)` - Synchronous schema validation
-- `validate.async(schema, data)` - Asynchronous schema validation
+- `validateAsync(schema, data)` - Asynchronous schema validation
 
 ### Security Functions
 
-- `isRegexSafe(regex)` - Check if a regex pattern is safe to use
-- `safeRegexText(regex, str, timeoutMs)` - Execute regex with timeout protection
+- `isRegexSafe(regex)` - Best-effort static check for a few dangerous regex shapes (returns `boolean`)
+- `safeRegexTest(regex, str)` - Async regex test with input-length + safety guards (returns `Promise<boolean>`). A legacy `timeoutMs` third argument is accepted but ignored (deprecated)
+- `safeRegexTestSync(regex, str, maxLength?)` - Synchronous regex test with input-length protection (returns `boolean`)
 
 ## Security Best Practices
 
 1. **Use Built-in Validators**: The predefined validators are optimized for security and performance
 2. **Validate Input Length**: Large inputs are automatically limited to prevent ReDoS attacks
-3. **Set Appropriate Timeouts**: Configure regex timeouts based on your application's needs
-4. **Test Custom Patterns**: Use `isRegexSafe()` to check custom regex patterns before deployment
-5. **Handle Async Errors**: Always use try-catch blocks with async validation
+3. **Test Custom Patterns**: Use `isRegexSafe()` to check custom regex patterns before deployment
+4. **Handle Async Errors**: Always use try-catch blocks with async validation
+5. **Consider a hardened engine**: For untrusted patterns needing guaranteed linear-time matching, pair the library with a non-backtracking engine such as the native `re2` module
 
 ## Contributing
 
@@ -491,6 +514,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 5. Open a Pull Request
 
 ## Development
+
+> Development tooling (ESLint 10) requires Node.js **>= 20.19**. This is a contributor requirement only — the published library still supports Node >= 18 for consumers.
 
 ```bash
 # Install dependencies
