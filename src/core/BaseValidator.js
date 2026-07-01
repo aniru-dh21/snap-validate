@@ -18,6 +18,8 @@ class BaseValidator {
     this.rules = [];
     this.asyncRules = [];
     this.isOptional = false;
+    // Deprecated no-op: a timer cannot interrupt a synchronous regex, so this
+    // value is no longer consulted. Retained only for backward compatibility.
     this.regexTimeout = 1000;
     this.fieldName = null; // Track field name for better error messages
   }
@@ -73,6 +75,9 @@ class BaseValidator {
     return this;
   }
 
+  // Deprecated: retained for backward compatibility and chainability. Regex
+  // execution cannot be interrupted by a timeout on a single thread, so this
+  // value is no longer used. Safe to remove in a future major version.
   setRegexTimeout(timeoutMs) {
     this.regexTimeout = timeoutMs;
     return this;
@@ -437,22 +442,11 @@ class BaseValidator {
         }
 
         try {
-          const result = await safeRegexTest(
-            regex,
-            stringValue,
-            this.regexTimeout
-          );
+          const result = await safeRegexTest(regex, stringValue);
           if (!result) {
             return new ValidationResult(false, [this._formatError(message)]);
           }
         } catch (error) {
-          if (error.message.includes('timeout')) {
-            return new ValidationResult(false, [
-              this._formatError(
-                'Pattern validation timeout - pattern too complex'
-              )
-            ]);
-          }
           return new ValidationResult(false, [
             this._formatError('Pattern validation failed')
           ]);

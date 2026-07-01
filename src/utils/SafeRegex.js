@@ -1,13 +1,25 @@
 /**
  * Snap Validate - Safe regex utilities
  *
- * NOTE: safeRegexTest's setTimeout does NOT interrupt a synchronous
- * regex.test() call (JS is single-threaded), so it cannot abort a real
- * ReDoS. The effective protections here are the input-length cap and the
- * isRegexSafe static heuristic.
+ * Honest note on ReDoS protection
+ * --------------------------------
+ * JavaScript runs regexes synchronously on a single thread, so a timer CANNOT
+ * interrupt a regex that is mid-backtrack: the event loop is blocked until
+ * regex.test() returns on its own. This module therefore does NOT attempt
+ * (fake) timeout-based interruption. The protections that actually work are:
+ *   1. an input-length cap, which rejects oversized inputs before matching; and
+ *   2. isRegexSafe(), a best-effort STATIC check that flags a few common
+ *      catastrophic-backtracking shapes.
+ * isRegexSafe is a heuristic - it can miss dangerous patterns and can
+ * occasionally over-reject safe ones. For guaranteed linear-time matching you
+ * need a non-backtracking engine (e.g. the native `re2` module) or a worker /
+ * subprocess with a real timeout.
  */
 
-// Function to detect potentially dangerous regex patterns
+const MAX_INPUT_LENGTH = 10000;
+
+// Best-effort STATIC detection of a few catastrophic-backtracking shapes.
+// Heuristic only - see the module note above.
 const isRegexSafe = (regex) => {
   const regexStr = regex.toString();
 
@@ -26,10 +38,12 @@ const isRegexSafe = (regex) => {
   return !isDangerous;
 };
 
-// Utility function to safely test regex with timeout protection
-const safeRegexTest = (regex, str, timeoutMs = 1000) => {
+// Asynchronous wrapper, kept returning a Promise for API compatibility.
+// Applies the two REAL guards (length cap + static safety check) and then runs
+// the match. It does NOT - and cannot - interrupt a running regex.
+const safeRegexTest = (regex, str) => {
   return new Promise((resolve, reject) => {
-    if (str.length > 10000) {
+    if (str.length > MAX_INPUT_LENGTH) {
       reject(new Error('Input too long for regex validation'));
       return;
     }
@@ -39,23 +53,16 @@ const safeRegexTest = (regex, str, timeoutMs = 1000) => {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      reject(new Error('Regex execution timeout - potential ReDoS attack'));
-    }, timeoutMs);
-
     try {
-      const result = regex.test(str);
-      clearTimeout(timeout);
-      resolve(result);
+      resolve(regex.test(str));
     } catch (error) {
-      clearTimeout(timeout);
       reject(error);
     }
   });
 };
 
-// Synchronous safe regex test with input length protection
-const safeRegexTestSync = (regex, str, maxLength = 10000) => {
+// Synchronous safe regex test with input-length protection.
+const safeRegexTestSync = (regex, str, maxLength = MAX_INPUT_LENGTH) => {
   if (str.length > maxLength) {
     throw new Error('Input too long for pattern validation');
   }
