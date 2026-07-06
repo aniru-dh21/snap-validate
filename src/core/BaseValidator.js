@@ -591,4 +591,43 @@ class BaseValidator {
   }
 }
 
+/**
+ * Standard Schema v1 (https://standardschema.dev) support on instances.
+ *
+ * Defined as a prototype getter so every BaseValidator carries `~standard`
+ * with zero per-instance cost. Calling `schema['~standard'].validate(value)`
+ * rebinds the instance's value and runs its accumulated rules.
+ *
+ * Note: a BaseValidator instance holds ONE value at a time, so an instance
+ * used this way is safe for sequential reuse but not for CONCURRENT async
+ * validation of different values. For a fully reusable / concurrency-safe
+ * schema, wrap a factory with toStandardSchema() from src/standard.js.
+ */
+Object.defineProperty(BaseValidator.prototype, '~standard', {
+  configurable: true,
+  get() {
+    const self = this;
+    return {
+      version: 1,
+      vendor: 'snap-validate',
+      validate(value) {
+        self.value = value;
+        if (self.asyncRules.length > 0) {
+          return self
+            .validateAsync()
+            .then((result) =>
+              result.isValid
+                ? { value: self.value }
+                : { issues: result.errors.map((message) => ({ message })) }
+            );
+        }
+        const result = self.validate();
+        return result.isValid
+          ? { value: self.value }
+          : { issues: result.errors.map((message) => ({ message })) };
+      }
+    };
+  }
+});
+
 module.exports = { BaseValidator };
