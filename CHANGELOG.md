@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-07-04
+
+### 🤝 Standard Schema Support
+
+- **Standard Schema v1** - snap-validate now implements [Standard Schema](https://standardschema.dev), the common interface consumed by tRPC, TanStack Form, Hono, and other tools. No adapters needed.
+  - New `toStandardSchema(factoryOrSchema)` export wraps a validator factory (`(value) => BaseValidator`) or a snap-validate schema object into a reusable, spec-compliant schema. Factory-wrapped schemas create a fresh validator per `validate()` call and are safe under concurrent async validation.
+  - Object schemas emit issues with `path: [fieldName]` per the spec, and the success `value` is a shallow copy of the input with `transform()`ed field values applied.
+  - `BaseValidator` instances also expose `~standard` directly (non-enumerable prototype property) for consumers that duck-type on it. An instance holds one value at a time — safe for sequential reuse; use `toStandardSchema()` for concurrent async use.
+  - Sync validators return synchronous results; async rules return Promises, as the spec allows. The `StandardSchemaV1` types are vendored into the TypeScript declarations, keeping the library zero-dependency.
+
+### 📦 Dual CJS + ESM
+
+- **Native ESM entry point** - Added `esm/index.mjs` and a conditional `exports` map, so both `require('snap-validate')` and `import ... from 'snap-validate'` work out of the box in Node, Vite, and modern bundlers.
+  - Implemented as a thin ESM wrapper over the single CommonJS implementation (no build step, no dual-package hazard: both entries share one `BaseValidator` class, so `instanceof` works across module systems).
+  - Deep imports of internal files are no longer possible (`exports` map encapsulation); the public API is the package root.
+
+### Changed
+
+- **README positioning** - Documented the measured bundle size (~4 KB min+gzip for the entire library), the CJS/ESM story, and Standard Schema usage with framework examples.
+
 ## [0.4.3] - 2026-07-01
 
 ### 🔒 Security
@@ -375,6 +395,3 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ### Migration Guides
 For major version upgrades, see our [Migration Guide](MIGRATION.md) for detailed instructions on updating your code.
-
-<!--### Security Reporting
-If you discover a security vulnerability, please report it privately to our security team at security@snap-validate.com instead of creating a public issue.-->

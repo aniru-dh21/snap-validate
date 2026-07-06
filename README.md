@@ -8,7 +8,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/snap-validate.svg?style=flat-square)](https://npm-stat.com/charts.html?package=snap-validate)
 ![Codecov](https://img.shields.io/codecov/c/github/aniru-dh21/snap-validate)
 
-A lightning-fast, lightweight validation library for common patterns without heavy dependencies. Perfect for client-side and server-side validation with zero external dependencies and built-in protection against ReDoS (Regular Expression Denial of Service) attacks.
+A lightning-fast, lightweight validation library for common patterns without heavy dependencies — **zero dependencies, ~4 KB min+gzip for the entire library, no tree-shaking required**. Validation for people who don't want a TypeScript compiler, a schema DSL, or a 15 KB dependency: just call a function. Works in Node (CJS **and** ESM) and in browsers via any bundler, with built-in guards against ReDoS (Regular Expression Denial of Service) patterns and first-class [Standard Schema](https://standardschema.dev) support for use with tRPC, TanStack Form, Hono, and friends.
 
 ## Features
 
@@ -25,6 +25,8 @@ A lightning-fast, lightweight validation library for common patterns without hea
 - 🧪 **Well Tested**: Comprehensive test suite with high coverage  
 - 📦 **Easy Integration**: Works in Node.js and browsers  
 - 🔗 **Chainable API**: Intuitive fluent interface  
+- 📦 **CJS + ESM**: `require()` or `import` — one implementation, both module systems  
+- 🤝 **Standard Schema**: Implements [Standard Schema v1](https://standardschema.dev) for drop-in use with tRPC, TanStack Form, Hono, and other compatible tools  
 - 📘 **TypeScript Support**: Complete TypeScript definitions with full IntelliSense support  
 
 ## Installation
@@ -34,6 +36,16 @@ npm install snap-validate
 ```
 
 Runtime: Node.js **>= 18** (the published library has zero dependencies and also runs in browsers via a bundler — see [Browser Usage](#browser-usage)).
+
+Both module systems are supported out of the box:
+
+```javascript
+// CommonJS
+const { validators, validate } = require('snap-validate');
+
+// ESM
+import { validators, validate } from 'snap-validate';
+```
 
 ### TypeScript
 
@@ -69,6 +81,40 @@ const data = {
 const result = validate(schema, data);
 console.log(result.isValid); // true
 ```
+
+## Standard Schema Support
+
+snap-validate implements [Standard Schema v1](https://standardschema.dev) — the common interface consumed by tRPC, TanStack Form, Hono, and a growing list of tools. Wrap any validator factory or schema object with `toStandardSchema()` and pass it to anything that accepts a Standard Schema:
+
+```javascript
+import { validators, BaseValidator, toStandardSchema } from 'snap-validate';
+
+// Single-value schema (reusable, concurrency-safe)
+const emailSchema = toStandardSchema((value) => validators.email(value));
+
+// Object schema — issues carry field paths, transforms flow into the output
+const signupSchema = toStandardSchema({
+  email: validators.email,
+  age: (value) => new BaseValidator(value).between(18, 99)
+});
+
+// Any Standard Schema consumer can now use these:
+const result = signupSchema['~standard'].validate({ email: 'A@B.com', age: 30 });
+// -> { value: { email: 'a@b.com', age: 30 } }          on success
+// -> { issues: [{ message, path: ['email'] }, ...] }   on failure
+```
+
+Example with a Standard Schema-aware framework (TanStack Form):
+
+```javascript
+import { useForm } from '@tanstack/react-form';
+
+const form = useForm({
+  validators: { onChange: signupSchema } // snap-validate, no adapter needed
+});
+```
+
+Sync validators return results synchronously; validators with async rules (`customAsync`, `patternAsync`, `arrayOfAsync`, `objectAsync`) return a Promise, per the spec. `BaseValidator` instances also expose `~standard` directly for tools that duck-type on the property — use `toStandardSchema()` when the same schema validates many values concurrently.
 
 ## TypeScript Support
 
@@ -488,6 +534,7 @@ console.log(result.isValid);
 
 - `validate(schema, data)` - Synchronous schema validation
 - `validateAsync(schema, data)` - Asynchronous schema validation
+- `toStandardSchema(factoryOrSchema)` - Wrap a validator factory or schema object as a [Standard Schema v1](https://standardschema.dev) for use with tRPC, TanStack Form, Hono, etc.
 
 ### Security Functions
 
