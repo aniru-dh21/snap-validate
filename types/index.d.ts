@@ -1,5 +1,58 @@
 declare module 'snap-validate' {
   /**
+   * Standard Schema v1 (https://standardschema.dev), vendored per the spec's
+   * recommendation so snap-validate stays zero-dependency. Tools like tRPC,
+   * TanStack Form, and Hono consume schemas through this interface.
+   */
+  export interface StandardSchemaV1<Input = unknown, Output = Input> {
+    readonly '~standard': StandardSchemaV1.Props<Input, Output>;
+  }
+
+  export namespace StandardSchemaV1 {
+    export interface Props<Input = unknown, Output = Input> {
+      readonly version: 1;
+      readonly vendor: string;
+      readonly validate: (
+        value: unknown
+      ) => Result<Output> | Promise<Result<Output>>;
+      readonly types?: Types<Input, Output> | undefined;
+    }
+
+    export type Result<Output> = SuccessResult<Output> | FailureResult;
+
+    export interface SuccessResult<Output> {
+      readonly value: Output;
+      readonly issues?: undefined;
+    }
+
+    export interface FailureResult {
+      readonly issues: ReadonlyArray<Issue>;
+    }
+
+    export interface Issue {
+      readonly message: string;
+      readonly path?: ReadonlyArray<PropertyKey | PathSegment> | undefined;
+    }
+
+    export interface PathSegment {
+      readonly key: PropertyKey;
+    }
+
+    export interface Types<Input = unknown, Output = Input> {
+      readonly input: Input;
+      readonly output: Output;
+    }
+
+    export type InferInput<Schema extends StandardSchemaV1> = NonNullable<
+      Schema['~standard']['types']
+    >['input'];
+
+    export type InferOutput<Schema extends StandardSchemaV1> = NonNullable<
+      Schema['~standard']['types']
+    >['output'];
+  }
+
+  /**
    * Result of a validation operation
    */
   export class ValidationResult {
@@ -195,6 +248,13 @@ declare module 'snap-validate' {
     ): BaseValidator;
 
     /**
+     * Standard Schema v1 interface (https://standardschema.dev). Rebinds this
+     * instance's value on each validate() call: safe for sequential reuse,
+     * but use toStandardSchema() for concurrent async validation.
+     */
+    readonly '~standard': StandardSchemaV1.Props<unknown, unknown>;
+
+    /**
      * Execute synchronous validation
      */
     validate(): ValidationResult;
@@ -284,9 +344,21 @@ declare module 'snap-validate' {
   ): boolean;
 
   /**
-   * Best-effort STATIC heuristic that flags a few common catastrophic-
-   * backtracking regex shapes. Not a guarantee: it can miss dangerous patterns
-   * and occasionally over-reject safe ones.
+   * Check if a regex pattern is safe (best-effort static heuristic)
    */
   export function isRegexSafe(regex: RegExp): boolean;
+
+  /**
+   * Convert a snap-validate validator factory or schema object into a
+   * reusable Standard Schema v1 (https://standardschema.dev), consumable by
+   * tRPC, TanStack Form, Hono, and other Standard Schema tools.
+   *
+   * - Pass a factory `(value) => BaseValidator` for a single-value schema.
+   * - Pass a snap-validate Schema object for object validation; issues carry
+   *   a `path` of [fieldName], and the success value is a shallow copy of the
+   *   input with transform()ed field values applied.
+   */
+  export function toStandardSchema(
+    input: ValidationFunction | Schema
+  ): StandardSchemaV1<unknown, unknown>;
 }
