@@ -1,6 +1,6 @@
 {
   "name": "snap-validate",
-  "version": "0.5.0",
+  "version": "0.4.4",
   "description": "Zero-dependency, ~4KB validation library for common patterns. CJS + ESM, Standard Schema support, no TypeScript compiler required.",
   "main": "src/index.js",
   "types": "types/index.d.ts",
