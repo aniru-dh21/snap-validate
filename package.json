@@ -1,6 +1,6 @@
 {
   "name": "snap-validate",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Zero-dependency, ~4KB validation library for common patterns. CJS + ESM, Standard Schema support, no TypeScript compiler required.",
   "main": "src/index.js",
   "types": "types/index.d.ts",
@@ -62,7 +62,7 @@
   },
   "homepage": "https://github.com/aniru-dh21/snap-validate#readme",
   "overrides": {
-    "js-yaml": "4.2.0"
+    "js-yaml": "^4.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
@@ -74,7 +74,7 @@
     "globals": "^17.0.0",
     "husky": "^9.1.0",
     "jest": "^30.4.2",
-    "lint-staged": "^15.2.0",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.2.0"
   },
   "files": [
