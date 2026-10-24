@@ -32,6 +32,22 @@ module.exports = [
     }
   },
 
+  // ESM entry point (esm/*.mjs): same style rules, module syntax
+  {
+    files: ['**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module'
+    },
+    rules: {
+      indent: ['error', 2],
+      'linebreak-style': ['error', 'unix'],
+      quotes: ['error', 'single'],
+      semi: ['error', 'always'],
+      'no-unused-vars': 'error'
+    }
+  },
+
   // Tests: add Jest globals and allow console
   {
     files: ['tests/**/*.js', '**/*.test.js'],
