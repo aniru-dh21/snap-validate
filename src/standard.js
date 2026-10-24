@@ -91,7 +91,8 @@ const fromSchemaObject = (schema) => ({
             // Instance provided directly: bind the current field value.
             instance.value = data[field];
           }
-          instance.setFieldName(field);
+          // No setFieldName(): the issue `path` already identifies the field, so a
+          // "field: " prefix on the message would be redundant for consumers.
           entries.push([field, instance]);
         } catch (error) {
           issues.push({

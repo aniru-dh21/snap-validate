@@ -13,6 +13,7 @@ const {
   isRegexSafe
 } = require('./utils/safeRegex');
 const { toStandardSchema } = require('./standard');
+const { safeParse, safeParseAsync } = require('./parse');
 
 module.exports = {
   BaseValidator,
@@ -23,5 +24,7 @@ module.exports = {
   toStandardSchema,
   safeRegexTest,
   safeRegexTestSync,
-  isRegexSafe
+  isRegexSafe,
+  safeParse,
+  safeParseAsync
 };
