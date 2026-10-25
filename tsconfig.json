@@ -2,26 +2,21 @@
   "compilerOptions": {
     "target": "es2018",
     "module": "Node16",
-    "lib": ["es2018"],
-    "declaration": true,
-    "outDir": "./dist",
-    "rootDir": "./",
+    "lib": [
+      "es2018"
+    ],
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
+    "skipLibCheck": false,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "Node16",
     "resolveJsonModule": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "noEmit": true,
+    "types": []
   },
   "include": [
-    "src/**/*",
     "types/**/*",
     "test-types.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.js"
   ]
 }
