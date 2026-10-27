@@ -49,32 +49,34 @@ phoneTests.forEach(({ value, format }) => {
 });
 
 console.log('\n3. Credit Card Validation:');
+// Never log card numbers: label each case and log the label instead.
 const creditCardTests = [
-  '4532015112830366', // Valid Visa test number
-  '1234567890123456', // Invalid
-  '4111111111111111' // Valid Visa test number
+  { label: 'Visa test number', number: '4532015112830366' },
+  { label: 'Fails Luhn check', number: '1234567890123456' },
+  { label: 'Visa test number (4111...)', number: '4111111111111111' }
 ];
 
-creditCardTests.forEach((cc) => {
-  const result = validators.creditCard(cc).validate();
-  console.log(`  ${cc}: ${result.isValid ? '✅' : '❌'}`);
+creditCardTests.forEach(({ label, number }) => {
+  const result = validators.creditCard(number).validate();
+  console.log(`  ${label}: ${result.isValid ? '✅' : '❌'}`);
   if (!result.isValid) {
     console.log(`    Errors: ${result.errors.join(', ')}`);
   }
 });
 
 console.log('\n4. Password Validation:');
+// Never log passwords: label each case and log the label instead.
 const passwordTests = [
-  'StrongPass123',
-  'weak',
-  'NoNumbers',
-  'onlylowercase123',
-  'ONLYUPPERCASE123'
+  { label: 'Strong password', password: 'StrongPass123' },
+  { label: 'Too short', password: 'weak' },
+  { label: 'No numbers', password: 'NoNumbers' },
+  { label: 'No uppercase', password: 'onlylowercase123' },
+  { label: 'No lowercase', password: 'ONLYUPPERCASE123' }
 ];
 
-passwordTests.forEach((password) => {
+passwordTests.forEach(({ label, password }) => {
   const result = validators.password(password).validate();
-  console.log(`  ${password}: ${result.isValid ? '✅' : '❌'}`);
+  console.log(`  ${label}: ${result.isValid ? '✅' : '❌'}`);
   if (!result.isValid) {
     console.log(`    Errors: ${result.errors.join(', ')}`);
   }
@@ -248,18 +250,27 @@ if (!schemaResult.isValid) {
 console.log('\n13. Advanced Password Validation:');
 const advancedPasswordTests = [
   {
+    label: '14 chars with special character',
     password: 'SimplePass123!',
     options: { minLength: 12, requireSpecialChars: true }
   },
-  { password: 'short', options: { minLength: 8 } },
-  { password: 'NoSpecialChars123', options: { requireSpecialChars: true } },
-  { password: 'validpassword123', options: { requireUppercase: false } }
+  { label: 'Too short', password: 'short', options: { minLength: 8 } },
+  {
+    label: 'Missing special character',
+    password: 'NoSpecialChars123',
+    options: { requireSpecialChars: true }
+  },
+  {
+    label: 'Lowercase allowed',
+    password: 'validpassword123',
+    options: { requireUppercase: false }
+  }
 ];
 
-advancedPasswordTests.forEach(({ password, options }) => {
+advancedPasswordTests.forEach(({ label, password, options }) => {
   const result = validators.password(password, options).validate();
   console.log(
-    `  ${password} (${JSON.stringify(options)}): ${result.isValid ? '✅' : '❌'}`
+    `  ${label} (${JSON.stringify(options)}): ${result.isValid ? '✅' : '❌'}`
   );
   if (!result.isValid) {
     console.log(`    Errors: ${result.errors.join(', ')}`);
