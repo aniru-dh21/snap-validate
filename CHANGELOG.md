@@ -5,7 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.4] - 2026-07-04
+## [0.5.0] - 2026-10-24
+
+### Added
+
+- **`safeParse(schema, data)` / `safeParseAsync(schema, data)`** - Validate and get the familiar result shape back: `{ success: true, data }` or `{ success: false, error }`, where `error` has `issues` (Standard Schema form), `fieldErrors` (messages grouped by field, ready for forms) and `formErrors` (messages not tied to a field).
+  - Accepts a validator factory, a snap-validate schema object, or **any** Standard Schema v1, including schemas from other libraries.
+  - TypeScript infers `data` from a typed Standard Schema; for snap-validate schemas pass the type explicitly, e.g. `safeParse<User>(schema, input)`.
+  - `safeParse` throws a clear error if the schema has async rules; use `safeParseAsync` for those.
+
+### Fixed
+
+- **`transform()` applied more than once** - Calling `validate()` or `validateAsync()` again on the same validator re-applied every `transform()` to the already-transformed value (for example `x => x * 2` doubled again, flipping a valid value to invalid). Each run now starts from the original input. Reading `validator.value` after a run still returns the transformed value.
+- **Example script** - `examples/basic-usage.js` crashed on the removed `safeRegexText` name and still demonstrated the deprecated regex timeout. It now runs cleanly and covers `transform`, `safeParse` and Standard Schema.
+- **Release asset** - The tarball attached to GitHub releases was hand-built from `src/` only and missed `esm/` and `types/`. Releases now attach the exact `npm pack` tarball.
+
+### Changed
+
+- **Standard Schema issue messages** - Issues from schema objects no longer start with a `"field: "` prefix, since each issue's `path` already names the field. The prefix was also inconsistent: it was skipped whenever the message happened to contain the field name. The classic `validate()` / `getErrors()` output is unchanged.
+- **Size claim** - The library is now ~4.6 KB min+gzip (3.8 KB brotli) with `safeParse` added. The README says "under 5 KB", and CI now enforces a 5 kB budget.
+
+### Development
+
+- **TypeScript checks that actually run** - `typescript` is now a devDependency (previously the scripts relied on a global `tsc`). `test-types.ts` was rewritten as compile-time assertions with exact-type checks and `@ts-expect-error` cases covering the whole API, and `types/index.d.ts` itself is now checked strictly. The declarations are verified against TypeScript 5.9, 6 and 7. The non-functional `lint-types` script was removed.
+- **ESLint** now lints `esm/*.mjs`, and the pre-commit hook covers `.mjs` files.
+- **Bundle-size budget** via `size-limit` (`npm run size`).
+- **CI** - `actions/checkout`, `actions/setup-node` and `codecov-action` updated to v7 (Node 24 action runtime). Tests run on Node 18, 20, 22, 24 and 26. The lint job now also type-checks, checks the size budget, smoke-tests the ESM entry and runs the examples.
+- **Dependabot** - Grouped monthly updates for GitHub Actions and dev tooling.
+- Development tooling now needs Node 22.19+ or 24.5+ (ESLint 10 and size-limit). The published library still supports Node 18+.
+
+## [0.4.5] - 2026-10-19
+
+### Security
+
+- Raised the `js-yaml` override from `4.2.0` to `^4.3.2` (development dependency chain only).
+
+### Development
+
+- Upgraded `lint-staged` from 15 to 17.
+
+## [0.4.4] - 2026-07-06
 
 ### 🤝 Standard Schema Support
 
@@ -59,6 +98,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **husky v9** - Updated the `prepare` script to `husky` and added a `pre-commit` hook running `lint-staged`.
 - **CI** - Test matrix updated to Node `[18, 20, 22, 24]`; linting moved to its own job on Node 22.
 - **Engines** - `engines.node` raised from `>=12.0.0` to `>=18.0.0` to match what the toolchain can test.
+
+## [0.4.2] - 2026-05-12
+
+### Security
+
+- Dependency update: `@babel/plugin-transform-modules-systemjs` 7.27.1 → 7.29.4 (development dependency only; no library code changes).
+
+## [0.4.1] - 2026-05-08
+
+### Security
+
+- Dependency updates from a security audit: `flatted` 3.3.3 → 3.4.2 and `picomatch` 2.3.1 → 2.3.2 (development dependencies only; no library code changes).
+
+## [0.4.0] - 2026-03-02
+
+### Added
+
+- **Array validation** - `array(message?)`, `arrayOf(validator, message?)` and `arrayOfAsync(validator, message?)` to require an array and validate each item; item errors are reported with their index.
+- **Nested objects** - `object(schema, message?)` and `objectAsync(schema, message?)` validate a nested object against a schema.
+- **Transforms** - `transform(fn, errorMessage?)` sanitizes the value before later rules run (the built-in `email` validator now trims and lowercases).
+- **Value checks** - `equals(value, message?)`, `oneOf(values, message?)` and `between(min, max, message?)`.
+- **Field context** - `setFieldName(name)` prefixes error messages with the field name; schema validation sets it automatically.
+
+### Security
+
+- Bumped `js-yaml` and refreshed the lockfile to resolve audit findings in development dependencies.
+
+### Tests
+
+- Added a test suite for the new array, object and transform features (`tests/test-phase1.test.js`) and expanded the validator tests.
 
 ## [0.3.3] - 2025-07-13
 
@@ -386,12 +455,13 @@ This project follows [Semantic Versioning](https://semver.org/):
 - **PATCH** version for backwards-compatible bug fixes
 
 ### Security Policy
-- **Current version** (0.4.x): Full support with security fixes, new features, and bug fixes
-- **Older versions** (0.3.x and below): Limited support, upgrade recommended for latest features and fixes
+- **Current version** (0.5.x): Full support with security fixes, new features, and bug fixes
+- **Previous version** (0.4.x): Security fixes only
+- **Older versions** (0.3.x and below): No longer supported; upgrade recommended
 
 ### Security Alerts
 - **v0.4.3**: Removed the ineffective regex "timeout" protection and documented the real guards (input-length cap + `isRegexSafe` static heuristic); cleared all known dependency advisories
 - **v0.3.1**: Added initial ReDoS mitigations (`isRegexSafe`, input-length cap)
 
-### Migration Guides
-For major version upgrades, see our [Migration Guide](MIGRATION.md) for detailed instructions on updating your code.
+### Upgrading
+Each release entry above lists any behavior changes under **Changed**. Within 0.x, minor versions may include small behavior changes; check those sections before upgrading.

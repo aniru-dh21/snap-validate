@@ -8,7 +8,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/snap-validate.svg?style=flat-square)](https://npm-stat.com/charts.html?package=snap-validate)
 ![Codecov](https://img.shields.io/codecov/c/github/aniru-dh21/snap-validate)
 
-A lightning-fast, lightweight validation library for common patterns without heavy dependencies — **zero dependencies, ~4 KB min+gzip for the entire library, no tree-shaking required**. Validation for people who don't want a TypeScript compiler, a schema DSL, or a 15 KB dependency: just call a function. Works in Node (CJS **and** ESM) and in browsers via any bundler, with built-in guards against ReDoS (Regular Expression Denial of Service) patterns and first-class [Standard Schema](https://standardschema.dev) support for use with tRPC, TanStack Form, Hono, and friends.
+A lightning-fast, lightweight validation library for common patterns without heavy dependencies — **zero dependencies, under 5 KB min+gzip for the entire library, no tree-shaking required**. Validation for people who don't want a TypeScript compiler, a schema DSL, or a 15 KB dependency: just call a function. Works in Node (CJS **and** ESM) and in browsers via any bundler, with built-in guards against ReDoS (Regular Expression Denial of Service) patterns and first-class [Standard Schema](https://standardschema.dev) support for use with tRPC, TanStack Form, Hono, and friends.
 
 ## Features
 
@@ -26,6 +26,7 @@ A lightning-fast, lightweight validation library for common patterns without hea
 - 📦 **Easy Integration**: Works in Node.js and browsers  
 - 🔗 **Chainable API**: Intuitive fluent interface  
 - 📦 **CJS + ESM**: `require()` or `import` — one implementation, both module systems  
+- ✅ **safeParse**: `{ success, data, error }` results with errors grouped by field, ready for forms  
 - 🤝 **Standard Schema**: Implements [Standard Schema v1](https://standardschema.dev) for drop-in use with tRPC, TanStack Form, Hono, and other compatible tools  
 - 📘 **TypeScript Support**: Complete TypeScript definitions with full IntelliSense support  
 
@@ -81,6 +82,34 @@ const data = {
 const result = validate(schema, data);
 console.log(result.isValid); // true
 ```
+
+## safeParse: Parse-Style Results
+
+`safeParse` returns the result shape most JavaScript validation code expects, with errors already grouped by field:
+
+```javascript
+import { validators, BaseValidator, safeParse, safeParseAsync } from 'snap-validate';
+
+const signupSchema = {
+  email: validators.email,
+  age: (value) => new BaseValidator(value).between(18, 99, 'Must be between 18 and 99')
+};
+
+const ok = safeParse(signupSchema, { email: ' New@Example.com ', age: 30 });
+// -> { success: true, data: { email: 'new@example.com', age: 30 } }   (transforms applied)
+
+const bad = safeParse(signupSchema, { email: 'nope', age: 12 });
+if (!bad.success) {
+  bad.error.fieldErrors; // { email: ['Invalid email format'], age: ['Must be between 18 and 99'] }
+  bad.error.formErrors;  // messages not tied to a field
+  bad.error.issues;      // [{ message, path: ['email'] }, ...]
+}
+
+// Schemas with async rules (customAsync, patternAsync, ...) need safeParseAsync
+const result = await safeParseAsync(signupSchema, input);
+```
+
+`safeParse` accepts a schema object, a single-value factory such as `(value) => validators.email(value)`, or any [Standard Schema](https://standardschema.dev), including schemas from other libraries. In TypeScript, `data` is inferred from typed Standard Schemas; for snap-validate schemas, pass the type: `safeParse<User>(signupSchema, input)`.
 
 ## Standard Schema Support
 
@@ -455,11 +484,12 @@ try {
   console.log('Validation exception:', error.message);
 }
 
-// Security-related errors
-const unsafeResult = validator.pattern(/potentially-dangerous-pattern/, 'Error').validate();
-if (!unsafeResult.isValid) {
-  console.log('Security errors:', unsafeResult.errors);
-  // Output: ['Potentially unsafe regex pattern detected']
+// Unsafe regex patterns are rejected when the rule is added, not during validation
+try {
+  new BaseValidator(value).pattern(/(a+)+$/, 'Error');
+} catch (error) {
+  console.log(error.message);
+  // Output: 'Potentially unsafe regex pattern detected. Please use a simple pattern.'
 }
 ```
 
@@ -523,6 +553,8 @@ console.log(result.isValid);
 
 - `ValidationResult` - Class for validation results (`isValid`, `errors`)
 - `SchemaValidationResult` - Result of `validate` / `validateAsync` (`isValid`, `errors`, `getErrors()`)
+- `SafeParseResult<T>` / `ParseError` - Result of `safeParse` / `safeParseAsync` (narrow on `success`)
+- `StandardSchemaV1` - The vendored [Standard Schema v1](https://standardschema.dev) interface
 - `ValidationFunction` - Type for validator functions used in schemas
 - `Schema` - Type for validation schema objects
 - `PasswordOptions` - Interface for password validation configuration
@@ -534,6 +566,8 @@ console.log(result.isValid);
 
 - `validate(schema, data)` - Synchronous schema validation
 - `validateAsync(schema, data)` - Asynchronous schema validation
+- `safeParse(schema, data)` - Returns `{ success: true, data }` or `{ success: false, error: { issues, fieldErrors, formErrors } }`; throws if the schema has async rules
+- `safeParseAsync(schema, data)` - Same, with async rule support; returns a Promise
 - `toStandardSchema(factoryOrSchema)` - Wrap a validator factory or schema object as a [Standard Schema v1](https://standardschema.dev) for use with tRPC, TanStack Form, Hono, etc.
 
 ### Security Functions
@@ -562,7 +596,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## Development
 
-> Development tooling (ESLint 10) requires Node.js **>= 20.19**. This is a contributor requirement only — the published library still supports Node >= 18 for consumers.
+> Development tooling (ESLint 10, size-limit) requires Node.js **22.19+ or 24.5+**. This is a contributor requirement only — the published library still supports Node >= 18 for consumers.
 
 ```bash
 # Install dependencies
@@ -586,11 +620,14 @@ npm run format
 # Security audit
 npm audit
 
-# Type checking (for TypeScript users)
+# Type-check the TypeScript definitions (runs test-types.ts)
 npm run type-check
 
-# Validate TypeScript definitions
-npm run validate-types
+# Check the bundle-size budget (5 kB)
+npm run size
+
+# Run the usage examples
+npm run example
 ```
 
 ## License
