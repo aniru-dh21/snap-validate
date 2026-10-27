@@ -267,11 +267,9 @@ const advancedPasswordTests = [
   }
 ];
 
-advancedPasswordTests.forEach(({ label, password, options }) => {
+advancedPasswordTests.forEach(({ password, options }, index) => {
   const result = validators.password(password, options).validate();
-  console.log(
-    `  ${label} (${JSON.stringify(options)}): ${result.isValid ? '✅' : '❌'}`
-  );
+  console.log(`  Password test #${index + 1}: ${result.isValid ? '✅' : '❌'}`);
   if (!result.isValid) {
     console.log(`    Errors: ${result.errors.join(', ')}`);
   }
