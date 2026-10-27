@@ -74,9 +74,9 @@ const passwordTests = [
   { label: 'No lowercase', password: 'ONLYUPPERCASE123' }
 ];
 
-passwordTests.forEach(({ label, password }) => {
+passwordTests.forEach(({ password }, index) => {
   const result = validators.password(password).validate();
-  console.log(`  ${label}: ${result.isValid ? '✅' : '❌'}`);
+  console.log(`  Password test #${index + 1}: ${result.isValid ? '✅' : '❌'}`);
   if (!result.isValid) {
     console.log(`    Errors: ${result.errors.join(', ')}`);
   }
