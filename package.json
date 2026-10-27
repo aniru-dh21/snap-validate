@@ -65,7 +65,7 @@
     "js-yaml": "^4.3.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.24.0",
+    "@babel/core": "^8.0.9",
     "@babel/preset-env": "^7.24.0",
     "@eslint/js": "^10.0.0",
     "@size-limit/preset-small-lib": "^14.3.0",
