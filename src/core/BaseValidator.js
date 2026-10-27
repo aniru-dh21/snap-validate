@@ -88,7 +88,9 @@ class BaseValidator {
     this.rules.push(() => {
       if (this.value != null && this.value !== '') {
         try {
-          this.value = fn(this.value);
+          // Write the working value only; the raw input is kept separately so
+          // a repeated validate() starts again from the original value.
+          this._value = fn(this._value);
         } catch (error) {
           return new ValidationResult(false, [
             this._formatError(`${errorMessage}: ${error.message}`)
@@ -545,6 +547,10 @@ class BaseValidator {
   validate() {
     const result = new ValidationResult(true);
 
+    // Every run starts from the raw input, so transform() rules are applied
+    // exactly once per run no matter how many times validate() is called.
+    this._value = this._input;
+
     for (const rule of this.rules) {
       try {
         const ruleResult = rule();
@@ -590,6 +596,24 @@ class BaseValidator {
     return result;
   }
 }
+
+/**
+ * `value` is an accessor so the raw input and the working (possibly
+ * transform()ed) value are tracked separately. Assigning `value` - in the
+ * constructor, when a schema rebinds a field, or via `~standard` - sets both.
+ * Reading it returns the working value, i.e. the transformed output after a
+ * run.
+ */
+Object.defineProperty(BaseValidator.prototype, 'value', {
+  configurable: true,
+  get() {
+    return this._value;
+  },
+  set(newValue) {
+    this._input = newValue;
+    this._value = newValue;
+  }
+});
 
 /**
  * Standard Schema v1 (https://standardschema.dev) support on instances.

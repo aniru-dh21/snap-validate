@@ -16,13 +16,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.x, 20.x, 22.x, 24.x]
+        node-version: [18.x, 20.x, 22.x, 24.x, 26.x]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -34,7 +34,7 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
@@ -48,12 +48,12 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Use Node.js 22
-        uses: actions/setup-node@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
 
       - name: Install dependencies
@@ -62,18 +62,30 @@ jobs:
       - name: Run linting
         run: npm run lint
 
+      - name: Type-check declarations
+        run: npm run type-check
+
+      - name: Check bundle size budget
+        run: npm run size
+
+      - name: Smoke-test ESM entry point
+        run: npm run test:esm
+
+      - name: Run examples
+        run: npm run example
+
   security:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Use Node.js 22
-        uses: actions/setup-node@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
 
       - name: Install dependencies
@@ -94,12 +106,12 @@ jobs:
       id-token: write    # Required for provenance generation
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Use Node.js 22
-        uses: actions/setup-node@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
@@ -144,7 +156,8 @@ jobs:
       - name: Create and Upload Release Assets
         if: steps.version_check.outputs.exists == 'false'
         run: |
-          tar -czf snap-validate-${{ github.event.release.tag_name }}.tar.gz src/ README.md package.json LICENSE
-          gh release upload ${{ github.event.release.tag_name }} snap-validate-${{ github.event.release.tag_name }}.tar.gz
+          # Upload the exact package npm installs (src/, esm/, types/, README, LICENSE)
+          TARBALL=$(npm pack --silent)
+          gh release upload "${{ github.event.release.tag_name }}" "$TARBALL"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

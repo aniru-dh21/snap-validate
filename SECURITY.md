@@ -6,15 +6,15 @@ We take security seriously and provide security updates for the following versio
 
 | Version | Supported          | Status |
 | ------- | ------------------ | ------ |
-| 0.4.x   | ✅ Yes             | Current stable release with full security support |
-| 0.3.x   | ⚠️ Security fixes only | Critical security patches only |
-| < 0.3.0 | ❌ No             | End of life - immediate upgrade recommended |
+| 0.5.x   | ✅ Yes             | Current stable release with full security support |
+| 0.4.x   | ⚠️ Security fixes only | Critical security patches only |
+| < 0.4.0 | ❌ No             | End of life - immediate upgrade recommended |
 
 ### Security Support Timeline
 
-- **Current version (0.4.x)**: Full support with security fixes, new features, and bug fixes
-- **Previous version (0.3.x)**: Security fixes and critical bug fixes only
-- **Older versions (< 0.3.0)**: No longer supported - immediate upgrade recommended
+- **Current version (0.5.x)**: Full support with security fixes, new features, and bug fixes
+- **Previous version (0.4.x)**: Security fixes and critical bug fixes only
+- **Older versions (< 0.4.0)**: No longer supported - immediate upgrade recommended
 
 ## Security Features
 
@@ -195,4 +195,4 @@ When reporting a security vulnerability, please include:
 
 ---
 
-This security policy is regularly reviewed and updated. Last updated: July 2026
+This security policy is regularly reviewed and updated. Last updated: October 2026

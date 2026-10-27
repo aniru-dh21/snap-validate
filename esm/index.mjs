@@ -14,6 +14,8 @@ export const {
   validate,
   validateAsync,
   toStandardSchema,
+  safeParse,
+  safeParseAsync,
   safeRegexTest,
   safeRegexTestSync,
   isRegexSafe

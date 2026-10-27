@@ -361,4 +361,54 @@ declare module 'snap-validate' {
   export function toStandardSchema(
     input: ValidationFunction | Schema
   ): StandardSchemaV1<unknown, unknown>;
+
+  /**
+   * Error details returned by safeParse / safeParseAsync on failure.
+   */
+  export interface ParseError {
+    /** Every issue, in Standard Schema form ({ message, path? }). */
+    readonly issues: ReadonlyArray<StandardSchemaV1.Issue>;
+    /** Messages grouped by top-level field name. */
+    readonly fieldErrors: { [field: string]: string[] };
+    /** Messages that do not belong to a field. */
+    readonly formErrors: string[];
+  }
+
+  /**
+   * Result of safeParse / safeParseAsync. Narrow on `success`.
+   */
+  export type SafeParseResult<T = unknown> =
+    | { readonly success: true; readonly data: T; readonly error?: undefined }
+    | {
+        readonly success: false;
+        readonly data?: undefined;
+        readonly error: ParseError;
+      };
+
+  /**
+   * Validate synchronously and return { success, data } or
+   * { success, error }. Accepts any Standard Schema (output type inferred),
+   * a validator factory, or a schema object. Throws if the schema has async
+   * rules; use safeParseAsync for those.
+   */
+  export function safeParse<S extends StandardSchemaV1>(
+    schema: S,
+    data: unknown
+  ): SafeParseResult<StandardSchemaV1.InferOutput<S>>;
+  export function safeParse<T = unknown>(
+    schema: ValidationFunction | Schema,
+    data: unknown
+  ): SafeParseResult<T>;
+
+  /**
+   * Like safeParse, but supports async rules. Always returns a Promise.
+   */
+  export function safeParseAsync<S extends StandardSchemaV1>(
+    schema: S,
+    data: unknown
+  ): Promise<SafeParseResult<StandardSchemaV1.InferOutput<S>>>;
+  export function safeParseAsync<T = unknown>(
+    schema: ValidationFunction | Schema,
+    data: unknown
+  ): Promise<SafeParseResult<T>>;
 }

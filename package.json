@@ -1,7 +1,7 @@
 {
   "name": "snap-validate",
-  "version": "0.4.5",
-  "description": "Zero-dependency, ~4KB validation library for common patterns. CJS + ESM, Standard Schema support, no TypeScript compiler required.",
+  "version": "0.5.0",
+  "description": "Zero-dependency, under-5KB validation library for common patterns. CJS + ESM, Standard Schema support, no TypeScript compiler required.",
   "main": "src/index.js",
   "types": "types/index.d.ts",
   "typings": "types/index.d.ts",
@@ -17,19 +17,19 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src tests",
-    "lint:fix": "eslint src tests --fix",
+    "lint": "eslint src tests esm",
+    "lint:fix": "eslint src tests esm --fix",
     "format": "prettier --write \"src/**/*.js\" \"esm/**/*.mjs\" \"tests/**/*.js\"",
     "prepare": "husky",
-    "prepublishOnly": "npm test && npm run lint && npm run test:esm",
+    "prepublishOnly": "npm test && npm run lint && npm run type-check && npm run test:esm",
     "test:esm": "node --input-type=module -e \"import { validators, toStandardSchema } from './esm/index.mjs'; if (!validators.email('a@b.com').validate().isValid) throw new Error('esm smoke failed'); if (toStandardSchema((v) => validators.email(v))['~standard'].version !== 1) throw new Error('standard schema smoke failed'); console.log('ESM smoke test passed');\"",
     "build": "echo 'No build step required for this library'",
     "example": "node examples/basic-usage.js",
-    "type-check": "tsc --noEmit",
-    "test-types": "tsc test-types.ts --noEmit",
-    "validate-types": "tsc --noEmit && echo 'TypeScript definitions are valid!'",
-    "lint-types": "eslint types/**/*.ts",
-    "check-exports": "node -e \"console.log(Object.keys(require('./src/index.js')))\""
+    "type-check": "tsc -p tsconfig.json",
+    "test-types": "npm run type-check",
+    "validate-types": "npm run type-check && echo 'TypeScript definitions are valid!'",
+    "check-exports": "node -e \"console.log(Object.keys(require('./src/index.js')))\"",
+    "size": "size-limit"
   },
   "keywords": [
     "validation",
@@ -68,6 +68,7 @@
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.24.0",
     "@eslint/js": "^10.0.0",
+    "@size-limit/preset-small-lib": "^14.3.0",
     "@types/jest": "^30.0.0",
     "babel-jest": "^30.4.1",
     "eslint": "^10.0.0",
@@ -75,7 +76,9 @@
     "husky": "^9.1.0",
     "jest": "^30.4.2",
     "lint-staged": "^17.6.0",
-    "prettier": "^3.2.0"
+    "prettier": "^3.2.0",
+    "size-limit": "^14.3.0",
+    "typescript": "^7.0.2"
   },
   "files": [
     "src/",
@@ -103,9 +106,21 @@
     }
   },
   "lint-staged": {
-    "*.js": [
+    "*.{js,mjs}": [
       "eslint --fix",
       "prettier --write"
     ]
-  }
+  },
+  "size-limit": [
+    {
+      "name": "Full library (ESM import)",
+      "path": "esm/index.mjs",
+      "limit": "5 kB"
+    },
+    {
+      "name": "Full library (CJS require)",
+      "path": "src/index.js",
+      "limit": "5 kB"
+    }
+  ]
 }
