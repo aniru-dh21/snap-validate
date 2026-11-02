@@ -1,34 +1,52 @@
 # Snap Validate ⚡
 
+**Form-ready validators for email, phone, credit card, postcode and password rules.** One function call each, readable error messages, zero dependencies, under 5 KB.
+
 [![npm version](https://img.shields.io/npm/v/snap-validate.svg?style=flat-square)](https://www.npmjs.com/package/snap-validate)
-[![Build Status](https://github.com/aniru-dh21/snap-validate/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/aniru-dh21/snap-validate/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![install size](https://img.shields.io/badge/dynamic/json?url=https://packagephobia.com/v2/api.json?p=snap-validate&query=$.install.pretty&label=install%20size&style=flat-square)](https://packagephobia.now.sh/result?p=snap-validate)
+[![CI](https://github.com/aniru-dh21/snap-validate/actions/workflows/ci.yml/badge.svg)](https://github.com/aniru-dh21/snap-validate/actions/workflows/ci.yml)
 [![npm bundle size](https://img.shields.io/bundlephobia/minzip/snap-validate?style=flat-square)](https://bundlephobia.com/package/snap-validate@latest)
-[![npm downloads](https://img.shields.io/npm/dm/snap-validate.svg?style=flat-square)](https://npm-stat.com/charts.html?package=snap-validate)
-![Codecov](https://img.shields.io/codecov/c/github/aniru-dh21/snap-validate)
+[![Codecov](https://img.shields.io/codecov/c/github/aniru-dh21/snap-validate?style=flat-square)](https://codecov.io/gh/aniru-dh21/snap-validate)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-A lightning-fast, lightweight validation library for common patterns without heavy dependencies — **zero dependencies, under 5 KB min+gzip for the entire library, no tree-shaking required**. Validation for people who don't want a TypeScript compiler, a schema DSL, or a 15 KB dependency: just call a function. Works in Node (CJS **and** ESM) and in browsers via any bundler, with built-in guards against ReDoS (Regular Expression Denial of Service) patterns and first-class [Standard Schema](https://standardschema.dev) support for use with tRPC, TanStack Form, Hono, and friends.
+```javascript
+import { validators } from 'snap-validate';
 
-## Features
+validators.phone('(555) 123-4567').validate().isValid;           // true
+validators.creditCard('4111 1111 1111 1111').validate().isValid; // true (Luhn-checked)
+validators.zipCode('SW1A 1AA', 'uk').validate().isValid;         // true
+validators.password('hunter2').validate().errors;
+// ['Password must be at least 8 characters',
+//  'Password must contain at least one uppercase letter']
+```
 
-- ⚡ **Lightning Fast**: Optimized for speed and performance  
-- 🚀 **Lightweight**: No external dependencies, minimal footprint  
-- 🔧 **Flexible**: Chainable validation rules and custom validators  
-- 📧 **Common Patterns**: Email, phone, credit card, URL, password validation  
-- 🌍 **International**: Support for different formats (US/International phone, postal codes)  
-- 🔄 **Async Support**: Full async validation support for database checks and API calls  
-- 🎯 **Conditional**: Advanced conditional validation with `when()` and `optional()`  
-- 🛠️ **Custom Validators**: Add your own sync and async validation logic  
-- 🔒 **Security First**: Built-in protection against ReDoS attacks and unsafe regex patterns  
-- 🛡️ **Input Guards**: Input-length limits and static detection of dangerous regex shapes  
-- 🧪 **Well Tested**: Comprehensive test suite with high coverage  
-- 📦 **Easy Integration**: Works in Node.js and browsers  
-- 🔗 **Chainable API**: Intuitive fluent interface  
-- 📦 **CJS + ESM**: `require()` or `import` — one implementation, both module systems  
-- ✅ **safeParse**: `{ success, data, error }` results with errors grouped by field, ready for forms  
-- 🤝 **Standard Schema**: Implements [Standard Schema v1](https://standardschema.dev) for drop-in use with tRPC, TanStack Form, Hono, and other compatible tools  
-- 📘 **TypeScript Support**: Complete TypeScript definitions with full IntelliSense support  
+### Drop it into your form library
+
+snap-validate implements [Standard Schema](https://standardschema.dev), so it plugs into React Hook Form, TanStack Form, tRPC, Hono and other compatible tools without an adapter:
+
+```javascript
+import { useForm } from 'react-hook-form';
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
+import { validators, toStandardSchema } from 'snap-validate';
+
+const signup = toStandardSchema({
+  email: validators.email,
+  phone: (value) => validators.phone(value),
+  password: validators.password
+});
+
+const form = useForm({ resolver: standardSchemaResolver(signup) });
+// errors.email.message -> 'Invalid email format'
+```
+
+### Why snap-validate?
+
+- **Presets for the fields forms actually have.** Email, phone (US and international), credit card with a Luhn check, US/Canadian/UK postcodes, and configurable password rules. No regexes to write or maintain.
+- **Plain JavaScript.** No schema language to learn and no TypeScript compiler needed. Type definitions are included if you use TypeScript.
+- **Small.** Zero dependencies and under 5 KB min+gzip for the whole library, with the budget enforced in CI.
+- **Fits your stack.** CommonJS and ESM, [Standard Schema v1](https://standardschema.dev), and [`safeParse`](#safeparse-parse-style-results) results with errors already grouped by field.
+- **Guards against regex denial-of-service.** Input-length limits and a check that rejects dangerous regex patterns.
+
+**When to pick something else:** if you want TypeScript types inferred from your schemas, or deeply nested data schemas for an API, [Zod](https://zod.dev) or [Valibot](https://valibot.dev) are a better fit. snap-validate is for validating user input with as little setup as possible.
 
 ## Installation
 
