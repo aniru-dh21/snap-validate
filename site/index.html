@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>snap-validate: form-ready validators for JavaScript</title>
+    <meta name="description"
+        content="Validate email, phone, credit card, postcode and password fields with one function call each. Readable error messages, zero dependencies, under 5 KB. Works with React Hook Form, TanStack Form and tRPC.">
+    <link rel="canonical" href="https://aniru-dh21.github.io/snap-validate/">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <meta name="color-scheme" content="light dark">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="snap-validate: form-ready validators for JavaScript">
+    <meta property="og:description"
+        content="Email, phone, card, postcode and password validation in one call each. Zero dependencies, under 5 KB.">
+    <meta property="og:url" content="https://aniru-dh21.github.io/snap-validate/">
+    <meta property="og:image" content="https://aniru-dh21.github.io/snap-validate/social-preview.png">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="640">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="preload" href="fonts/public-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/public-sans-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="main.js"></script>
+</head>
+
+<body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="top">
+        <div class="wrap top-inner">
+            <a class="brand" href="./" aria-label="snap-validate home">
+                <svg class="bolt" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M13.5 2 4 13.5h6.5L9 22l11-12.5h-6.8L13.5 2Z" />
+                </svg>
+                <span>snap-validate</span>
+            </a>
+            <nav aria-label="Project links">
+                <a href="https://github.com/aniru-dh21/snap-validate#readme">Docs</a>
+                <a href="https://github.com/aniru-dh21/snap-validate">GitHub</a>
+                <a href="https://www.npmjs.com/package/snap-validate">npm</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="hero wrap" aria-labelledby="hero-title">
+            <div class="pitch">
+                <h1 id="hero-title">Validate the fields your forms actually have.</h1>
+                <p class="lede">Email, phone, credit card, postcode and password rules. One function call each, readable
+                    error messages, zero dependencies, under 5&nbsp;KB.</p>
+
+                <div class="install">
+                    <code id="install-cmd">npm install snap-validate</code>
+                    <button type="button" class="copy" data-copy="install-cmd">Copy</button>
+                </div>
+                <p class="links">
+                    <a href="https://github.com/aniru-dh21/snap-validate#readme">Read the docs</a>
+                    <a href="https://github.com/aniru-dh21/snap-validate">Star on GitHub</a>
+                </p>
+            </div>
+
+            <!-- Live playground: the hero's main event -->
+            <div class="sheet playground" aria-labelledby="pg-title">
+                <h2 id="pg-title" class="sr-only">Try a validator</h2>
+
+                <fieldset class="presets">
+                    <legend class="sr-only">Choose a validator</legend>
+                    <label><input type="radio" name="preset" value="email"><span>Email</span></label>
+                    <label><input type="radio" name="preset" value="phone" checked><span>Phone</span></label>
+                    <label><input type="radio" name="preset" value="card"><span>Card</span></label>
+                    <label><input type="radio" name="preset" value="postcode"><span>Postcode</span></label>
+                    <label><input type="radio" name="preset" value="password"><span>Password</span></label>
+                    <label><input type="radio" name="preset" value="url"><span>URL</span></label>
+                </fieldset>
+
+                <div class="options" id="pg-options"></div>
+
+                <div class="field big">
+                    <label for="pg-input" id="pg-label">Phone number</label>
+                    <div class="line">
+                        <input id="pg-input" type="text" autocomplete="off" spellcheck="false" autocapitalize="off"
+                            aria-describedby="pg-verdict">
+                        <svg class="mark" id="pg-mark" viewBox="0 0 40 40" aria-hidden="true">
+                            <path id="pg-mark-path" d="" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="samples">
+                    <button type="button" class="sample" data-sample="valid">Try a valid one</button>
+                    <button type="button" class="sample" data-sample="invalid">Try an invalid one</button>
+                </div>
+
+                <div class="verdict" id="pg-verdict" aria-live="polite"></div>
+
+                <pre class="code code-small" tabindex="0"
+                    aria-label="Code for this check"><code id="pg-code"></code></pre>
+            </div>
+        </section>
+
+        <section class="band" aria-labelledby="form-title">
+            <div class="wrap">
+                <h2 id="form-title">A whole form, one <code>safeParse</code> call</h2>
+                <p class="section-lede">Fill in the form. Errors come back already grouped by field, and transforms such
+                    as trimming and lowercasing the email are applied to the data. Nothing is sent anywhere.</p>
+
+                <div class="split">
+                    <form class="sheet signup" id="signup" novalidate>
+                        <div class="field">
+                            <label for="f-email">Email</label>
+                            <input id="f-email" name="email" type="email" autocomplete="off" aria-describedby="e-email">
+                            <p class="error" id="e-email"></p>
+                        </div>
+                        <div class="field">
+                            <label for="f-phone">Phone <span class="hint">(international, e.g. +61 412 345
+                                    678)</span></label>
+                            <input id="f-phone" name="phone" type="tel" autocomplete="off" aria-describedby="e-phone">
+                            <p class="error" id="e-phone"></p>
+                        </div>
+                        <div class="row">
+                            <div class="field">
+                                <label for="f-country">Country</label>
+                                <select id="f-country" name="country">
+                                    <option value="uk">United Kingdom</option>
+                                    <option value="us">United States</option>
+                                    <option value="ca">Canada</option>
+                                </select>
+                            </div>
+                            <div class="field grow">
+                                <label for="f-postcode">Postcode</label>
+                                <input id="f-postcode" name="postcode" type="text" autocomplete="off"
+                                    aria-describedby="e-postcode">
+                                <p class="error" id="e-postcode"></p>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="f-password">Password</label>
+                            <input id="f-password" name="password" type="password" autocomplete="new-password"
+                                aria-describedby="e-password">
+                            <p class="error" id="e-password"></p>
+                        </div>
+                        <div class="actions">
+                            <button type="submit" class="primary">Check form</button>
+                            <button type="button" class="ghost" id="fill-example">Fill with an example</button>
+                        </div>
+                        <p class="form-status" id="form-status" aria-live="polite"></p>
+                    </form>
+
+                    <div class="output">
+                        <pre class="code" tabindex="0" aria-label="Schema used by this form"><code><span class="k">const</span> signup = {
+  email: validators.email,
+  phone: (v) =&gt; validators.phone(v, <span class="s">'international'</span>),
+  postcode: (v) =&gt; validators.zipCode(v, <span class="s" id="schema-country">'uk'</span>),
+  password: validators.password
+};
+
+<span class="k">const</span> result = safeParse(signup, form);</code></pre>
+                        <p class="output-label" id="result-label">The value of <code>result</code></p>
+                        <pre class="code result" tabindex="0"
+                            aria-labelledby="result-label"><code id="result-json"></code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="wrap prose-section" aria-labelledby="works-title">
+            <h2 id="works-title">Works with your form library</h2>
+            <p class="section-lede">snap-validate implements <a href="https://standardschema.dev">Standard Schema</a>,
+                so React Hook Form, TanStack Form, tRPC, Hono and other compatible tools accept it without an adapter.
+            </p>
+            <div class="install-block">
+                <pre class="code" tabindex="0" aria-label="React Hook Form example"><code><span class="k">import</span> { useForm } <span class="k">from</span> <span class="s">'react-hook-form'</span>;
+<span class="k">import</span> { standardSchemaResolver } <span class="k">from</span> <span class="s">'@hookform/resolvers/standard-schema'</span>;
+<span class="k">import</span> { validators, toStandardSchema } <span class="k">from</span> <span class="s">'snap-validate'</span>;
+
+<span class="k">const</span> signup = toStandardSchema({
+  email: validators.email,
+  phone: (value) =&gt; validators.phone(value),
+  password: validators.password
+});
+
+<span class="k">const</span> form = useForm({ resolver: standardSchemaResolver(signup) });
+<span class="c">// errors.email.message -&gt; 'Invalid email format'</span></code></pre>
+            </div>
+        </section>
+
+        <section class="wrap prose-section why" aria-labelledby="why-title">
+            <h2 id="why-title">Why snap-validate</h2>
+            <dl class="reasons">
+                <div>
+                    <dt>No regexes to write</dt>
+                    <dd>Presets cover email, US and international phone numbers, card numbers with a Luhn check, US,
+                        Canadian and UK postcodes, and password rules you can configure.</dd>
+                </div>
+                <div>
+                    <dt>Plain JavaScript</dt>
+                    <dd>No schema language and no TypeScript compiler needed. Type definitions are included if you use
+                        TypeScript.</dd>
+                </div>
+                <div>
+                    <dt>Small on purpose</dt>
+                    <dd>Zero dependencies and under 5&nbsp;KB for the whole library, with the budget checked on every
+                        change. Works with <code>require</code> and <code>import</code>.</dd>
+                </div>
+                <div>
+                    <dt>Safe with untrusted input</dt>
+                    <dd>Input-length limits and a check that rejects regex patterns known to hang on crafted input.</dd>
+                </div>
+            </dl>
+            <p class="aside"><strong>When to pick something else:</strong> if you want TypeScript types inferred from
+                your schemas, or deeply nested data schemas for an API, <a href="https://zod.dev">Zod</a> or <a
+                    href="https://valibot.dev">Valibot</a> are a better fit. snap-validate is for checking what people
+                type into forms with as little setup as possible.</p>
+        </section>
+    </main>
+
+    <footer class="foot">
+        <div class="wrap foot-inner">
+            <p>snap-validate <span id="version"></span>, MIT licensed.</p>
+            <p><a href="https://github.com/aniru-dh21/snap-validate/blob/main/CHANGELOG.md">Changelog</a> <a
+                    href="https://github.com/aniru-dh21/snap-validate/issues">Report an issue</a></p>
+        </div>
+    </footer>
+</body>
+
+</html>

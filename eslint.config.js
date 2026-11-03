@@ -4,7 +4,7 @@ const globals = require('globals');
 module.exports = [
   // Global ignores (replaces .eslintignore)
   {
-    ignores: ['node_modules/', 'dist/', 'coverage/']
+    ignores: ['node_modules/', 'dist/', 'coverage/', '_site/']
   },
 
   // ESLint's recommended baseline
@@ -45,6 +45,22 @@ module.exports = [
       quotes: ['error', 'single'],
       semi: ['error', 'always'],
       'no-unused-vars': 'error'
+    }
+  },
+
+  // Website (site/): ES modules running in the browser, build script in Node
+  {
+    files: ['site/**/*.js', 'site/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node
+      }
+    },
+    rules: {
+      'no-console': 'off'
     }
   },
 
