@@ -17,8 +17,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src tests esm",
-    "lint:fix": "eslint src tests esm --fix",
+    "lint": "eslint src tests esm site",
+    "lint:fix": "eslint src tests esm site --fix",
     "format": "prettier --write \"src/**/*.js\" \"esm/**/*.mjs\" \"tests/**/*.js\"",
     "prepare": "husky",
     "prepublishOnly": "npm test && npm run lint && npm run type-check && npm run test:esm",
@@ -29,7 +29,9 @@
     "test-types": "npm run type-check",
     "validate-types": "npm run type-check && echo 'TypeScript definitions are valid!'",
     "check-exports": "node -e \"console.log(Object.keys(require('./src/index.js')))\"",
-    "size": "size-limit"
+    "size": "size-limit",
+    "site:build": "node site/build.mjs",
+    "site:preview": "npm run site:build && npx serve _site"
   },
   "keywords": [
     "validation",
@@ -73,6 +75,7 @@
     "@size-limit/preset-small-lib": "^14.3.0",
     "@types/jest": "^30.0.0",
     "babel-jest": "^30.4.1",
+    "esbuild": "^0.28.2",
     "eslint": "^10.0.0",
     "globals": "^17.0.0",
     "husky": "^9.1.0",

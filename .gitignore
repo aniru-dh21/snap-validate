@@ -7,3 +7,5 @@ dist/
 build/
 # npm pack output
 *.tgz
+# website build output
+_site/
